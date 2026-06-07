@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIXER ESTUDIO · 命运预测</title>
+<style>
+/* =================================================================
+   命运预测 V1.1 — Apple Dark Design System
+   升级：年月日分栏 · 出生地真太阳时 · 精确时间 · 姓名
+   ================================================================= */
+
+@font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Regular');font-weight:400;font-display:swap}
+@font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Semibold');font-weight:600;font-display:swap}
+@font-face{font-family:'SF Pro Text';src:local('SF Pro Text'),local('SFProText-Regular');font-weight:400;font-display:swap}
+@font-face{font-family:'SF Pro Text';src:local('SF Pro Text'),local('SFProText-Semibold');font-weight:600;font-display:swap}
+
+:root{
+  --bg:#000000;--surface:#1a1a1d;--card:#242426;--card2:#272729;
+  --b-sub:rgba(255,255,255,0.06);--b-mid:rgba(255,255,255,0.1);--b-hi:rgba(255,255,255,0.2);
+  --text:#ffffff;--text2:rgba(255,255,255,0.7);--text3:rgba(255,255,255,0.4);
+  --accent:#0071e3;--accent-hover:#0077ed;--accent-text:#2997ff;
+  --danger:#ff453a;--success:#30d158;--warning:#ff9f0a;
+  --star-bright:#ffd60a;--star-dim:rgba(255,255,255,0.35);
+  --font-sans:'SF Pro Text',-apple-system,BlinkMacSystemFont,'Helvetica Neue','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font-display:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;--transition:0.2s ease;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-sans);font-size:14px;font-weight:400;
+  letter-spacing:-0.22px;line-height:1.47;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
+}
+.app{min-height:100vh;display:flex;flex-direction:column}
+
+/* ===== TOOLBAR ===== */
+.toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 22px;height:48px;
+  background:rgba(28,28,30,0.8);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:0.5px solid rgba(255,255,255,0.08);
+  flex-shrink:0;gap:16px;position:sticky;top:0;z-index:100;
+}
+.toolbar-brand{display:flex;align-items:center;gap:10px}
+.toolbar-logo{
+  width:20px;height:20px;border-radius:5px;
+  background:linear-gradient(135deg,#7f77dd,#d4537e,#d85a30);
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;
+}
+.toolbar-title{font-size:13px;font-weight:500;letter-spacing:-0.16px;color:var(--text)}
+.toolbar-actions{display:flex;gap:8px;align-items:center}
+
+/* ===== BUTTONS ===== */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:5px 14px;border-radius:980px;font-size:12px;font-weight:400;
+  letter-spacing:-0.12px;cursor:pointer;border:none;
+  background:rgba(255,255,255,0.08);color:var(--text);
+  transition:all var(--transition);font-family:var(--font-sans);white-space:nowrap;
+}
+.btn:hover{background:rgba(255,255,255,0.12)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:#0077ed;box-shadow:0 4px 16px rgba(0,113,227,0.3)}
+.btn-outline{background:transparent;color:var(--accent);border:0.5px solid rgba(0,113,227,0.4)}
+.btn-outline:hover{background:rgba(0,113,227,0.06);border-color:var(--accent)}
+.btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.3;cursor:not-allowed;pointer-events:none;transform:none}
+
+/* ===== MAIN ===== */
+.main{
+  flex:1;display:flex;justify-content:center;padding:36px 28px 48px;
+  overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent;
+}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.main-inner{width:100%;max-width:900px;display:flex;flex-direction:column;gap:20px}
+
+/* ===== CARD BASE ===== */
+.card{
+  background:var(--card);border-radius:var(--radius-xl);
+  border:0.5px solid rgba(255,255,255,0.06);padding:24px 28px;
+}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;
+}
+.card-title{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:-0.12px}
+.card-badge{font-size:11px;color:var(--text3);letter-spacing:-0.08px}
+
+/* ===== INPUT FORM ===== */
+.form-grid{display:flex;flex-direction:column;gap:14px}
+
+.form-row{
+  display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
+}
+
+.input-group{display:flex;flex-direction:column;gap:5px}
+.input-group label{
+  font-size:11px;font-weight:400;color:var(--text3);letter-spacing:-0.08px;
+}
+.input-group input,.input-group select{
+  background:var(--surface);border:0.5px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius);color:var(--text);
+  font-family:var(--font-sans);font-size:14px;font-weight:400;
+  padding:10px 12px;outline:none;transition:all var(--transition);
+  -webkit-appearance:none;appearance:none;height:40px;
+}
+.input-group input:focus,.input-group select:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,0.1);
+}
+.input-group input:hover,.input-group select:hover{border-color:rgba(255,255,255,0.2)}
+.input-group input::placeholder{color:rgba(255,255,255,0.2);font-size:13px}
+.input-group select{
+  background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='rgba(255,255,255,0.4)' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+  cursor:pointer;
+}
+
+/* Date selector widths */
+.input-name{width:160px}
+.input-year{width:100px}.input-month{width:80px}.input-day{width:80px}
+.input-province{width:130px}.input-city{width:130px}
+.input-hour{width:80px}.input-minute{width:80px}
+
+/* Section label */
+.section-label{
+  font-size:11px;font-weight:400;color:var(--text3);letter-spacing:-0.08px;
+  align-self:flex-end;margin-bottom:5px;margin-right:4px;
+}
+
+/* Converted time display */
+.time-convert{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--accent-text);letter-spacing:-0.08px;
+  padding:4px 10px;background:rgba(0,113,227,0.06);
+  border-radius:var(--radius);white-space:nowrap;height:28px;align-self:flex-end;margin-bottom:6px;
+}
+
+/* Unknown time checkbox */
+.checkbox-row{
+  display:flex;align-items:center;gap:6px;
+  cursor:pointer;user-select:none;-webkit-user-select:none;
+  align-self:flex-end;margin-bottom:5px;white-space:nowrap;
+}
+.checkbox-row input[type="checkbox"]{
+  display:none;
+}
+.checkbox-box{
+  width:16px;height:16px;border-radius:4px;
+  border:1px solid rgba(255,255,255,0.2);
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);flex-shrink:0;
+}
+.checkbox-row input:checked + .checkbox-box{
+  background:var(--accent);border-color:var(--accent);
+}
+.checkbox-box::after{
+  content:'';display:block;width:4px;height:8px;
+  border:solid #fff;border-width:0 1.5px 1.5px 0;
+  transform:rotate(45deg) translateY(-1px);
+  opacity:0;transition:opacity var(--transition);
+}
+.checkbox-row input:checked + .checkbox-box::after{opacity:1}
+.checkbox-label{font-size:12px;color:var(--text3);letter-spacing:-0.08px}
+
+/* ===== GENDER SELECTOR ===== */
+.gender-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.gender-toggle-v2{display:flex;gap:8px}
+.gender-btn-v2{
+  display:flex;align-items:center;gap:6px;
+  padding:9px 20px;border-radius:var(--radius);
+  font-size:13px;font-weight:400;font-family:var(--font-sans);
+  cursor:pointer;border:0.5px solid rgba(255,255,255,0.1);
+  background:var(--surface);color:var(--text2);
+  transition:all var(--transition);letter-spacing:-0.08px;
+}
+.gender-btn-v2:hover{border-color:rgba(255,255,255,0.25);color:var(--text)}
+.gender-btn-v2.active{
+  background:var(--accent);border-color:var(--accent);color:#fff;
+}
+.gender-icon{font-size:15px;letter-spacing:0}
+
+/* ===== BIG GENERATE BUTTON ===== */
+.btn-generate{
+  padding:12px 36px;font-size:14px;font-weight:500;
+  letter-spacing:2px;height:40px;
+  background:linear-gradient(135deg,#7f77dd,#d4537e);
+  border:none;border-radius:var(--radius);
+  color:#fff;cursor:pointer;font-family:var(--font-display);
+  transition:all var(--transition);white-space:nowrap;
+  box-shadow:0 2px 12px rgba(127,119,221,0.25);
+}
+.btn-generate:hover{
+  box-shadow:0 4px 24px rgba(212,83,126,0.4);
+  transform:translateY(-1px);
+}
+.btn-generate:active{transform:scale(0.98) translateY(0)}
+
+/* ===== API KEY SECTION ===== */
+.api-row{
+  display:flex;align-items:center;gap:8px;padding-top:2px;
+}
+.api-label{font-size:11px;color:var(--text3);white-space:nowrap;letter-spacing:-0.08px}
+.api-input{
+  flex:1;background:var(--surface);border:0.5px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius);color:var(--text);padding:6px 10px;height:32px;
+  font-family:var(--font-sans);font-size:11px;outline:none;
+  transition:all var(--transition);letter-spacing:-0.08px;
+}
+.api-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,0.1)}
+.api-input::placeholder{color:rgba(255,255,255,0.2)}
+.api-status{font-size:10px;padding:3px 8px;border-radius:4px;white-space:nowrap;letter-spacing:-0.08px}
+.api-status.set{color:var(--success);background:rgba(48,209,88,0.1)}
+.api-status.unset{color:var(--text3);background:rgba(255,255,255,0.04)}
+
+/* ===== CHART CARD ===== */
+.chart-grid-outer{display:flex;justify-content:center;padding:8px 0}
+.chart-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;
+  grid-template-rows:auto auto auto auto;
+  gap:6px;width:100%;max-width:760px;
+}
+
+.palace-cell{
+  background:var(--surface);border-radius:var(--radius);
+  border:0.5px solid rgba(255,255,255,0.06);
+  padding:8px 10px;min-height:64px;
+  transition:all var(--transition);cursor:default;
+  display:flex;flex-direction:column;gap:2px;
+}
+.palace-cell:hover{border-color:rgba(255,255,255,0.12);background:#1f1f23}
+.palace-cell.soul-palace{border-color:rgba(255,69,58,0.3);box-shadow:inset 0 0 0 1px rgba(255,69,58,0.08)}
+.palace-cell.body-palace{border-color:rgba(0,113,227,0.3);box-shadow:inset 0 0 0 1px rgba(0,113,227,0.08)}
+.palace-header{display:flex;align-items:center;gap:6px}
+.palace-branch{font-size:12px;font-weight:500;color:var(--text2)}
+.palace-stem{font-size:10px;color:var(--text3);letter-spacing:0}
+.palace-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.2}
+.palace-stars{display:flex;flex-wrap:wrap;gap:3px 6px;margin-top:2px}
+.star-tag{font-size:11px;letter-spacing:-0.06px;line-height:1.3}
+.star-tag.bright{color:var(--star-bright)}
+.star-tag.medium{color:var(--text2)}
+.star-tag.dim{color:var(--star-dim)}
+.palace-badges{display:flex;gap:4px;margin-top:2px}
+.palace-badge{
+  font-size:9px;padding:1px 5px;border-radius:3px;
+  font-weight:400;letter-spacing:-0.06px;
+}
+.palace-badge.soul-badge{background:rgba(255,69,58,0.12);color:var(--danger)}
+.palace-badge.body-badge{background:rgba(0,113,227,0.1);color:var(--accent-text)}
+
+.center-info{
+  background:var(--card2);border-radius:var(--radius);
+  border:0.5px solid rgba(255,255,255,0.1);
+  grid-column:2/4;grid-row:2/4;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:16px;gap:10px;text-align:center;
+}
+.center-name{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.2px}
+.center-pillar{font-size:20px;font-weight:400;color:var(--text);font-family:var(--font-display);letter-spacing:2px;line-height:1.4}
+.center-meta{display:flex;flex-direction:column;gap:4px}
+.center-meta-row{font-size:11px;color:var(--text3);letter-spacing:-0.08px;display:flex;gap:12px;justify-content:center}
+.center-meta-row span{color:var(--text2)}
+
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 24px;text-align:center;gap:8px;
+}
+.empty-icon{font-size:32px;opacity:0.3}
+.empty-title{font-size:14px;font-weight:400;color:var(--text2);letter-spacing:-0.12px}
+.empty-sub{font-size:12px;color:var(--text3);letter-spacing:-0.08px;max-width:300px}
+
+/* ===== AI INTERPRETATION ===== */
+.interpretation-content{
+  font-size:14px;line-height:1.8;color:var(--text2);
+  letter-spacing:-0.12px;white-space:pre-wrap;word-break:break-word;
+}
+.interpretation-loading{
+  display:flex;align-items:center;justify-content:center;padding:32px;gap:8px;
+}
+.spinner{
+  width:16px;height:16px;border:2px solid rgba(255,255,255,0.1);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin 0.6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--text3);letter-spacing:-0.08px}
+
+/* ===== FOOTER ===== */
+.footer{
+  border-top:0.5px solid rgba(255,255,255,0.06);
+  padding:12px 22px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:8px;flex-shrink:0;
+}
+.footer-text{font-size:10px;color:var(--text3);letter-spacing:-0.06px}
+.footer-link{color:var(--accent-text);text-decoration:none;font-size:10px}
+.footer-link:hover{text-decoration:underline}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:700px){
+  .chart-grid{grid-template-columns:1fr 1fr;gap:4px}
+  .center-info{grid-column:1/3;grid-row:auto;min-height:100px}
+  .form-row{gap:8px}
+  .input-name{width:140px}.input-year{width:90px}.input-month{width:75px}.input-day{width:75px}
+  .input-province{width:120px}.input-city{width:120px}
+  .input-hour{width:70px}.input-minute{width:70px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-brand">
+    <div class="toolbar-logo">命</div>
+    <span class="toolbar-title">FIXER ESTUDIO 命运预测工具</span>
+  </div>
+  <div class="toolbar-actions">
+    <span class="api-status unset" id="apiStatus">未配置 API</span>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+<div class="main-inner">
+
+<!-- Input Card -->
+<div class="card" id="inputCard">
+  <div class="card-header">
+    <span class="card-title">输入生辰信息</span>
+  </div>
+  <div class="form-grid">
+
+    <!-- Row 1: Name -->
+    <div class="form-row">
+      <div class="input-group">
+        <label>姓名（可选）</label>
+        <input type="text" id="userName" class="input-name" placeholder="匿名访客" maxlength="20">
+      </div>
+    </div>
+
+    <!-- Row 2: Year/Month/Day + Location -->
+    <div class="form-row">
+      <div class="input-group">
+        <label>出生日期（阳历）</label>
+        <div style="display:flex;gap:6px">
+          <select id="birthYear" class="input-year">
+            <option value="">年</option>
+          </select>
+          <select id="birthMonth" class="input-month">
+            <option value="">月</option>
+          </select>
+          <select id="birthDay" class="input-day">
+            <option value="">日</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>出生地点</label>
+        <div style="display:flex;gap:6px">
+          <select id="birthProvince" class="input-province">
+            <option value="">省份</option>
+          </select>
+          <select id="birthCity" class="input-city">
+            <option value="">城市</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Time + Checkbox + Converted display -->
+    <div class="form-row">
+      <div class="input-group" id="timeGroup">
+        <label>出生时间</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="birthHour" class="input-hour">
+            <option value="">时</option>
+          </select>
+          <span style="color:var(--text3);font-size:12px">:</span>
+          <select id="birthMinute" class="input-minute">
+            <option value="">分</option>
+          </select>
+        </div>
+      </div>
+      <div class="time-convert" id="timeConvert" style="display:none">
+        → 真太阳时 <span id="timeConvertText" style="font-weight:500;color:var(--text)">--</span>
+      </div>
+      <label class="checkbox-row" id="unknownTimeLabel">
+        <input type="checkbox" id="unknownTime">
+        <span class="checkbox-box"></span>
+        <span class="checkbox-label">不知道出生时间</span>
+      </label>
+    </div>
+
+    <!-- Row 4: Gender + Button -->
+    <div class="form-row" style="align-items:center">
+      <div class="input-group">
+        <label>性别</label>
+        <div class="gender-toggle-v2" id="genderToggle">
+          <button class="gender-btn-v2 active" data-gender="男">
+            <span class="gender-icon">&#9794;</span> 男
+          </button>
+          <button class="gender-btn-v2" data-gender="女">
+            <span class="gender-icon">&#9792;</span> 女
+          </button>
+        </div>
+      </div>
+      <button class="btn-generate" id="btnGenerate" style="margin-left:auto">
+        立即起盘 · 解命运密码
+      </button>
+    </div>
+
+  </div>
+
+  <!-- API Key -->
+  <div class="api-row" style="margin-top:16px;border-top:0.5px solid rgba(255,255,255,0.06);padding-top:14px">
+    <span class="api-label">AI 解读密钥</span>
+    <input type="password" id="apiKey" class="api-input" placeholder="粘贴 DeepSeek API Key（可选，用于 AI 解读）">
+    <button class="btn btn-outline" id="btnSaveKey" style="padding:4px 14px;font-size:11px;height:32px">保存</button>
+  </div>
+</div>
+
+<!-- Chart Section -->
+<div class="card" id="chartCard">
+  <div class="card-header">
+    <span class="card-title">紫微命盘</span>
+    <span class="card-badge" id="chartBadge"></span>
+  </div>
+  <div id="chartContent">
+    <div class="empty-state">
+      <div class="empty-icon">✦</div>
+      <div class="empty-title">输入生辰信息，揭示你的星空密码</div>
+      <div class="empty-sub">基于开源 iztro 引擎，瞬间排出完整的紫微斗数十二宫命盘</div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Interpretation -->
+<div class="card" id="aiCard" style="display:none">
+  <div class="card-header">
+    <span class="card-title">AI 命运解读</span>
+    <span class="card-badge">DeepSeek</span>
+  </div>
+  <div id="aiContent"></div>
+</div>
+
+</div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span class="footer-text">排盘引擎：iztro (MIT) · AI 解读：DeepSeek · 仅供娱乐</span>
+  <span class="footer-text">
+    <a href="https://github.com/Renhuai123/ziwei-doushu" target="_blank" class="footer-link">数据源：紫微斗数开源项目</a>
+  </span>
+</div>
+
+</div>
+
+<!-- iztro CDN -->
+<script src="https://cdn.jsdelivr.net/npm/iztro/dist/iztro.min.js"></script>
+
+<script>
+/* =================================================================
+   命运预测 V1.1 — Main Logic
+   ================================================================= */
+
+// ---- City Database (province → cities with longitude) ----
+const cityData = {
+  "北京":[{"name":"北京","lng":116.4}],
+  "上海":[{"name":"上海","lng":121.5}],
+  "天津":[{"name":"天津","lng":117.2}],
+  "重庆":[{"name":"重庆","lng":106.5}],
+  "河北":[
+    {"name":"石家庄","lng":114.5},{"name":"唐山","lng":118.2},{"name":"保定","lng":115.5},
+    {"name":"邯郸","lng":114.5},{"name":"廊坊","lng":116.7},{"name":"沧州","lng":116.8},
+    {"name":"邢台","lng":114.5},{"name":"张家口","lng":114.9},{"name":"承德","lng":117.9},
+    {"name":"秦皇岛","lng":119.6},{"name":"衡水","lng":115.7}
+  ],
+  "山西":[
+    {"name":"太原","lng":112.5},{"name":"大同","lng":113.3},{"name":"运城","lng":111.0},
+    {"name":"长治","lng":113.1},{"name":"临汾","lng":111.5},{"name":"晋中","lng":112.7},
+    {"name":"吕梁","lng":111.1},{"name":"晋城","lng":112.8},{"name":"忻州","lng":112.7},
+    {"name":"朔州","lng":112.4},{"name":"阳泉","lng":113.6}
+  ],
+  "内蒙古":[
+    {"name":"呼和浩特","lng":111.7},{"name":"包头","lng":109.8},{"name":"鄂尔多斯","lng":109.8},
+    {"name":"赤峰","lng":118.9},{"name":"通辽","lng":122.3},{"name":"呼伦贝尔","lng":119.8},
+    {"name":"乌兰察布","lng":113.1},{"name":"巴彦淖尔","lng":107.4},{"name":"乌海","lng":106.8},
+    {"name":"锡林郭勒","lng":116.0}
+  ],
+  "辽宁":[
+    {"name":"沈阳","lng":123.4},{"name":"大连","lng":121.6},{"name":"鞍山","lng":123.0},
+    {"name":"锦州","lng":121.1},{"name":"抚顺","lng":123.9},{"name":"本溪","lng":123.8},
+    {"name":"丹东","lng":124.4},{"name":"营口","lng":122.2},{"name":"铁岭","lng":123.8},
+    {"name":"葫芦岛","lng":120.8},{"name":"盘锦","lng":122.1},{"name":"辽阳","lng":123.2},
+    {"name":"朝阳","lng":120.4},{"name":"阜新","lng":121.7}
+  ],
+  "吉林":[
+    {"name":"长春","lng":125.3},{"name":"吉林","lng":126.6},{"name":"延边","lng":129.5},
+    {"name":"四平","lng":124.4},{"name":"通化","lng":125.9},{"name":"白城","lng":122.8},
+    {"name":"辽源","lng":125.1},{"name":"松原","lng":124.8},{"name":"白山","lng":126.4}
+  ],
+  "黑龙江":[
+    {"name":"哈尔滨","lng":126.6},{"name":"齐齐哈尔","lng":123.9},{"name":"大庆","lng":125.0},
+    {"name":"牡丹江","lng":129.6},{"name":"佳木斯","lng":130.4},{"name":"鸡西","lng":130.9},
+    {"name":"鹤岗","lng":130.3},{"name":"双鸭山","lng":131.2},{"name":"绥化","lng":127.0},
+    {"name":"黑河","lng":127.5},{"name":"加格达奇","lng":124.1}
+  ],
+  "江苏":[
+    {"name":"南京","lng":118.8},{"name":"苏州","lng":120.6},{"name":"无锡","lng":120.3},
+    {"name":"徐州","lng":117.2},{"name":"常州","lng":119.9},{"name":"南通","lng":120.9},
+    {"name":"扬州","lng":119.4},{"name":"镇江","lng":119.4},{"name":"盐城","lng":120.1},
+    {"name":"泰州","lng":119.9},{"name":"淮安","lng":119.0},{"name":"连云港","lng":119.2},
+    {"name":"宿迁","lng":118.3}
+  ],
+  "浙江":[
+    {"name":"杭州","lng":120.2},{"name":"宁波","lng":121.5},{"name":"温州","lng":120.7},
+    {"name":"金华","lng":119.6},{"name":"嘉兴","lng":120.8},{"name":"绍兴","lng":120.6},
+    {"name":"湖州","lng":120.1},{"name":"台州","lng":121.4},{"name":"衢州","lng":118.9},
+    {"name":"丽水","lng":119.9},{"name":"舟山","lng":122.2}
+  ],
+  "安徽":[
+    {"name":"合肥","lng":117.3},{"name":"芜湖","lng":118.4},{"name":"蚌埠","lng":117.4},
+    {"name":"黄山","lng":118.3},{"name":"安庆","lng":117.0},{"name":"马鞍山","lng":118.5},
+    {"name":"铜陵","lng":117.8},{"name":"阜阳","lng":115.8},{"name":"宿州","lng":117.0},
+    {"name":"滁州","lng":118.3},{"name":"六安","lng":116.5},{"name":"亳州","lng":115.8},
+    {"name":"池州","lng":117.5},{"name":"宣城","lng":118.8},{"name":"淮南","lng":117.0},
+    {"name":"淮北","lng":116.8}
+  ],
+  "福建":[
+    {"name":"福州","lng":119.3},{"name":"厦门","lng":118.1},{"name":"泉州","lng":118.6},
+    {"name":"漳州","lng":117.6},{"name":"莆田","lng":119.0},{"name":"三明","lng":117.6},
+    {"name":"南平","lng":118.2},{"name":"龙岩","lng":117.0},{"name":"宁德","lng":119.5}
+  ],
+  "江西":[
+    {"name":"南昌","lng":115.9},{"name":"九江","lng":116.0},{"name":"赣州","lng":114.9},
+    {"name":"景德镇","lng":117.2},{"name":"上饶","lng":117.9},{"name":"宜春","lng":114.4},
+    {"name":"吉安","lng":115.0},{"name":"抚州","lng":116.4},{"name":"新余","lng":114.9},
+    {"name":"萍乡","lng":113.8},{"name":"鹰潭","lng":117.0}
+  ],
+  "山东":[
+    {"name":"济南","lng":117.0},{"name":"青岛","lng":120.4},{"name":"烟台","lng":121.4},
+    {"name":"潍坊","lng":119.1},{"name":"威海","lng":122.1},{"name":"临沂","lng":118.3},
+    {"name":"淄博","lng":118.0},{"name":"济宁","lng":116.6},{"name":"泰安","lng":117.1},
+    {"name":"日照","lng":119.5},{"name":"聊城","lng":116.0},{"name":"德州","lng":116.3},
+    {"name":"滨州","lng":118.0},{"name":"菏泽","lng":115.5},{"name":"枣庄","lng":117.3},
+    {"name":"东营","lng":118.7}
+  ],
+  "河南":[
+    {"name":"郑州","lng":113.6},{"name":"洛阳","lng":112.5},{"name":"开封","lng":114.3},
+    {"name":"南阳","lng":112.5},{"name":"新乡","lng":113.9},{"name":"安阳","lng":114.4},
+    {"name":"许昌","lng":113.8},{"name":"焦作","lng":113.2},{"name":"周口","lng":114.6},
+    {"name":"驻马店","lng":114.0},{"name":"平顶山","lng":113.3},{"name":"信阳","lng":114.1},
+    {"name":"商丘","lng":115.6},{"name":"漯河","lng":114.0},{"name":"濮阳","lng":115.0},
+    {"name":"三门峡","lng":111.2}
+  ],
+  "湖北":[
+    {"name":"武汉","lng":114.3},{"name":"宜昌","lng":111.3},{"name":"襄阳","lng":112.1},
+    {"name":"荆州","lng":112.2},{"name":"十堰","lng":110.8},{"name":"荆门","lng":112.2},
+    {"name":"黄冈","lng":114.9},{"name":"孝感","lng":113.9},{"name":"咸宁","lng":114.3},
+    {"name":"黄石","lng":115.1},{"name":"鄂州","lng":114.9},{"name":"随州","lng":113.4},
+    {"name":"恩施","lng":109.5}
+  ],
+  "湖南":[
+    {"name":"长沙","lng":113.0},{"name":"株洲","lng":113.1},{"name":"岳阳","lng":113.1},
+    {"name":"张家界","lng":110.5},{"name":"衡阳","lng":112.6},{"name":"湘潭","lng":112.9},
+    {"name":"郴州","lng":113.0},{"name":"常德","lng":111.7},{"name":"益阳","lng":112.3},
+    {"name":"邵阳","lng":111.5},{"name":"娄底","lng":112.0},{"name":"永州","lng":111.6},
+    {"name":"怀化","lng":110.0},{"name":"湘西","lng":109.7}
+  ],
+  "广东":[
+    {"name":"广州","lng":113.3},{"name":"深圳","lng":114.1},{"name":"珠海","lng":113.6},
+    {"name":"佛山","lng":113.1},{"name":"东莞","lng":113.7},{"name":"中山","lng":113.4},
+    {"name":"惠州","lng":114.4},{"name":"江门","lng":113.1},{"name":"肇庆","lng":112.5},
+    {"name":"汕头","lng":116.7},{"name":"揭阳","lng":116.4},{"name":"湛江","lng":110.4},
+    {"name":"茂名","lng":110.9},{"name":"韶关","lng":113.6},{"name":"清远","lng":113.0},
+    {"name":"河源","lng":114.7},{"name":"梅州","lng":116.1},{"name":"潮州","lng":116.6},
+    {"name":"阳江","lng":111.9},{"name":"汕尾","lng":115.4},{"name":"云浮","lng":112.0}
+  ],
+  "广西":[
+    {"name":"南宁","lng":108.3},{"name":"桂林","lng":110.3},{"name":"柳州","lng":109.4},
+    {"name":"北海","lng":109.1},{"name":"玉林","lng":110.2},{"name":"梧州","lng":111.3},
+    {"name":"河池","lng":108.0},{"name":"百色","lng":106.6},{"name":"钦州","lng":108.6},
+    {"name":"贵港","lng":109.6},{"name":"贺州","lng":111.6},{"name":"来宾","lng":109.2},
+    {"name":"崇左","lng":107.4},{"name":"防城港","lng":108.3}
+  ],
+  "海南":[
+    {"name":"海口","lng":110.3},{"name":"三亚","lng":109.5},{"name":"儋州","lng":109.6},
+    {"name":"三沙","lng":112.3}
+  ],
+  "四川":[
+    {"name":"成都","lng":104.1},{"name":"绵阳","lng":104.7},{"name":"乐山","lng":103.8},
+    {"name":"宜宾","lng":104.6},{"name":"德阳","lng":104.4},{"name":"南充","lng":106.1},
+    {"name":"达州","lng":107.5},{"name":"泸州","lng":105.4},{"name":"广元","lng":105.8},
+    {"name":"自贡","lng":104.8},{"name":"攀枝花","lng":101.7},{"name":"内江","lng":105.0},
+    {"name":"遂宁","lng":105.6},{"name":"广安","lng":106.6},{"name":"眉山","lng":103.8},
+    {"name":"巴中","lng":106.8},{"name":"雅安","lng":103.0},{"name":"资阳","lng":104.6},
+    {"name":"阿坝","lng":101.7},{"name":"甘孜","lng":101.9},{"name":"凉山(西昌)","lng":102.3}
+  ],
+  "贵州":[
+    {"name":"贵阳","lng":106.7},{"name":"遵义","lng":106.9},{"name":"安顺","lng":105.9},
+    {"name":"毕节","lng":105.3},{"name":"铜仁","lng":109.2},{"name":"凯里","lng":107.9},
+    {"name":"都匀","lng":107.5},{"name":"兴义","lng":104.9},{"name":"六盘水","lng":104.8}
+  ],
+  "云南":[
+    {"name":"昆明","lng":102.7},{"name":"大理","lng":100.2},{"name":"丽江","lng":100.2},
+    {"name":"西双版纳","lng":100.8},{"name":"曲靖","lng":103.8},{"name":"玉溪","lng":102.5},
+    {"name":"红河","lng":103.3},{"name":"保山","lng":99.2},{"name":"楚雄","lng":101.6},
+    {"name":"普洱","lng":101.0},{"name":"昭通","lng":103.7},{"name":"文山","lng":104.2},
+    {"name":"临沧","lng":100.1},{"name":"迪庆","lng":99.7},{"name":"怒江","lng":98.9},
+    {"name":"德宏","lng":98.6}
+  ],
+  "西藏":[
+    {"name":"拉萨","lng":91.1},{"name":"日喀则","lng":88.9},{"name":"昌都","lng":97.2},
+    {"name":"林芝","lng":94.4},{"name":"那曲","lng":92.1},{"name":"山南","lng":91.8},
+    {"name":"阿里","lng":80.1}
+  ],
+  "陕西":[
+    {"name":"西安","lng":108.9},{"name":"咸阳","lng":108.7},{"name":"宝鸡","lng":107.2},
+    {"name":"延安","lng":109.5},{"name":"榆林","lng":109.7},{"name":"渭南","lng":109.5},
+    {"name":"汉中","lng":107.0},{"name":"安康","lng":109.0},{"name":"商洛","lng":109.9},
+    {"name":"铜川","lng":109.1}
+  ],
+  "甘肃":[
+    {"name":"兰州","lng":103.8},{"name":"天水","lng":105.7},{"name":"敦煌","lng":94.7},
+    {"name":"嘉峪关","lng":98.3},{"name":"金昌","lng":102.2},{"name":"白银","lng":104.2},
+    {"name":"张掖","lng":100.5},{"name":"武威","lng":102.6},{"name":"酒泉","lng":98.5},
+    {"name":"庆阳","lng":107.6},{"name":"平凉","lng":106.7},{"name":"定西","lng":104.6},
+    {"name":"陇南","lng":104.9},{"name":"临夏","lng":103.2},{"name":"甘南","lng":102.9}
+  ],
+  "青海":[
+    {"name":"西宁","lng":101.8},{"name":"海东","lng":102.1},{"name":"海西(德令哈)","lng":97.4},
+    {"name":"海北","lng":100.9},{"name":"黄南","lng":102.0},{"name":"海南(共和)","lng":100.6},
+    {"name":"玉树","lng":97.0},{"name":"果洛","lng":100.2}
+  ],
+  "宁夏":[
+    {"name":"银川","lng":106.3},{"name":"石嘴山","lng":106.4},{"name":"吴忠","lng":106.2},
+    {"name":"固原","lng":106.3},{"name":"中卫","lng":105.2}
+  ],
+  "新疆":[
+    {"name":"乌鲁木齐","lng":87.6},{"name":"喀什","lng":75.9},{"name":"克拉玛依","lng":84.9},
+    {"name":"伊宁","lng":81.3},{"name":"昌吉","lng":87.3},{"name":"哈密","lng":93.5},
+    {"name":"吐鲁番","lng":89.2},{"name":"阿克苏","lng":80.3},{"name":"和田","lng":79.9},
+    {"name":"塔城","lng":82.9},{"name":"阿勒泰","lng":88.1},{"name":"博乐","lng":82.1},
+    {"name":"库尔勒","lng":86.1},{"name":"阿图什","lng":76.2}
+  ],
+  "香港":[{"name":"香港","lng":114.2}],
+  "澳门":[{"name":"澳门","lng":113.5}],
+  "台湾":[
+    {"name":"台北","lng":121.5},{"name":"高雄","lng":120.3},{"name":"台中","lng":120.7},
+    {"name":"台南","lng":120.2},{"name":"新竹","lng":121.0},{"name":"基隆","lng":121.7}
+  ]
+};
+
+// ---- State ----
+let apiKey = localStorage.getItem('destiny_apikey') || '';
+let currentChartData = null;
+
+// ---- Init ----
+function init() {
+  document.getElementById('apiKey').value = apiKey;
+  updateApiStatus();
+
+  // Populate year/month/day/hour/minute selectors
+  populateYearSelect();
+  populateMonthSelect();
+  populateHourSelect();
+  populateMinuteSelect();
+  populateProvinceSelect();
+
+  // Event listeners
+  document.getElementById('btnGenerate').addEventListener('click', generateChart);
+  document.getElementById('btnSaveKey').addEventListener('click', saveApiKey);
+
+  document.getElementById('birthYear').addEventListener('change', updateDaySelect);
+  document.getElementById('birthMonth').addEventListener('change', updateDaySelect);
+
+  document.getElementById('birthProvince').addEventListener('change', updateCitySelect);
+  document.getElementById('birthCity').addEventListener('change', updateTimeConvert);
+
+  document.getElementById('birthHour').addEventListener('change', updateTimeConvert);
+  document.getElementById('birthMinute').addEventListener('change', updateTimeConvert);
+
+  document.getElementById('unknownTime').addEventListener('change', toggleUnknownTime);
+
+  // Gender toggle
+  document.querySelectorAll('.gender-btn-v2').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.gender-btn-v2').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Set default date to 2000-01-01
+  document.getElementById('birthYear').value = '2000';
+  document.getElementById('birthMonth').value = '1';
+  updateDaySelect();
+  document.getElementById('birthDay').value = '1';
+
+  // Set default time to 12:00
+  document.getElementById('birthHour').value = '12';
+  document.getElementById('birthMinute').value = '0';
+}
+
+// ---- Populate Selectors ----
+function populateYearSelect() {
+  const sel = document.getElementById('birthYear');
+  for (let y = 2030; y >= 1900; y--) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y + '年';
+    sel.appendChild(opt);
+  }
+}
+
+function populateMonthSelect() {
+  const sel = document.getElementById('birthMonth');
+  for (let m = 1; m <= 12; m++) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m + '月';
+    sel.appendChild(opt);
+  }
+}
+
+function updateDaySelect() {
+  const y = parseInt(document.getElementById('birthYear').value);
+  const m = parseInt(document.getElementById('birthMonth').value);
+  const sel = document.getElementById('birthDay');
+  sel.innerHTML = '<option value="">日</option>';
+  if (!y || !m) return;
+  const days = new Date(y, m, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d + '日';
+    sel.appendChild(opt);
+  }
+}
+
+function populateHourSelect() {
+  const sel = document.getElementById('birthHour');
+  for (let h = 0; h <= 23; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = String(h).padStart(2, '0');
+    sel.appendChild(opt);
+  }
+}
+
+function populateMinuteSelect() {
+  const sel = document.getElementById('birthMinute');
+  for (let m = 0; m <= 59; m++) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = String(m).padStart(2, '0');
+    sel.appendChild(opt);
+  }
+}
+
+function populateProvinceSelect() {
+  const sel = document.getElementById('birthProvince');
+  const provinces = Object.keys(cityData).sort((a,b)=>{
+    const order = ['北京','上海','天津','重庆','河北','山西','内蒙古','辽宁','吉林','黑龙江','江苏','浙江','安徽','福建','江西','山东','河南','湖北','湖南','广东','广西','海南','四川','贵州','云南','西藏','陕西','甘肃','青海','宁夏','新疆','香港','澳门','台湾'];
+    return order.indexOf(a) - order.indexOf(b);
+  });
+  provinces.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    sel.appendChild(opt);
+  });
+}
+
+function updateCitySelect() {
+  const province = document.getElementById('birthProvince').value;
+  const sel = document.getElementById('birthCity');
+  sel.innerHTML = '<option value="">城市</option>';
+  if (!province || !cityData[province]) return;
+  cityData[province].forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = JSON.stringify(c);
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  updateTimeConvert();
+}
+
+// ---- Time Conversion ----
+function getSelectedCityLongitude() {
+  const cityVal = document.getElementById('birthCity').value;
+  if (!cityVal) return null;
+  try { return JSON.parse(cityVal).lng; } catch(e) { return null; }
+}
+
+// Convert hour:minute to true solar time based on city longitude
+// China standard timezone = 120°E. Offset = (120 - lng) * 4 minutes
+function getTrueSolarTime() {
+  const hour = parseInt(document.getElementById('birthHour').value);
+  const minute = parseInt(document.getElementById('birthMinute').value);
+  const lng = getSelectedCityLongitude();
+
+  if (isNaN(hour) || isNaN(minute)) return null;
+  if (lng === null) return { hour, minute, offset: 0 };
+
+  const offsetMin = Math.round((120 - lng) * 4);
+  let totalMin = hour * 60 + minute + offsetMin;
+  if (totalMin < 0) totalMin += 1440;
+  if (totalMin >= 1440) totalMin -= 1440;
+
+  return {
+    hour: Math.floor(totalMin / 60),
+    minute: totalMin % 60,
+    offset: offsetMin
+  };
+}
+
+// Convert true solar time to iztro timeIndex (0-12)
+function timeToIndex(hour, minute) {
+  // Chinese 时辰 mapping
+  if (hour === 23 || hour === 0) {
+    // 子时 split: 23:00-23:59 → 晚子时(12), 00:00-00:59 → 早子时(0)
+    return hour === 23 ? 12 : 0;
+  }
+  // 01:00-02:59 → 1(丑), 03:00-04:59 → 2(寅), ..., 21:00-22:59 → 11(亥)
+  return Math.floor((hour + 1) / 2);
+}
+
+// Get 时辰 name for display
+function getShichenName(idx) {
+  const names = ['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时'];
+  if (idx === 12) return '子时';
+  return names[idx] || '未知';
+}
+function getShichenRange(idx) {
+  const ranges = ['23:00-01:00','01:00-03:00','03:00-05:00','05:00-07:00','07:00-09:00','09:00-11:00','11:00-13:00','13:00-15:00','15:00-17:00','17:00-19:00','19:00-21:00','21:00-23:00'];
+  if (idx === 12) return '23:00-01:00';
+  return ranges[idx] || '';
+}
+
+function updateTimeConvert() {
+  const unknown = document.getElementById('unknownTime').checked;
+  const el = document.getElementById('timeConvert');
+  const txt = document.getElementById('timeConvertText');
+
+  if (unknown) {
+    el.style.display = 'none';
+    return;
+  }
+
+  const ts = getTrueSolarTime();
+  if (!ts) { el.style.display = 'none'; return; }
+
+  const idx = timeToIndex(ts.hour, ts.minute);
+  const name = getShichenName(idx);
+  const range = getShichenRange(idx);
+
+  el.style.display = 'flex';
+  if (ts.offset === 0) {
+    txt.textContent = name + ' ' + range;
+  } else {
+    const sign = ts.offset > 0 ? '+' : '';
+    txt.textContent = name + ' ' + range + ' (偏差' + sign + ts.offset + '分)';
+  }
+}
+
+function toggleUnknownTime() {
+  const unknown = document.getElementById('unknownTime').checked;
+  const timeGroup = document.getElementById('timeGroup');
+  const timeConvert = document.getElementById('timeConvert');
+
+  if (unknown) {
+    timeGroup.style.opacity = '0.35';
+    timeGroup.style.pointerEvents = 'none';
+    timeConvert.style.display = 'none';
+    // Default to 午时 (timeIndex=6) if unknown
+    document.getElementById('birthHour').value = '12';
+    document.getElementById('birthMinute').value = '0';
+  } else {
+    timeGroup.style.opacity = '1';
+    timeGroup.style.pointerEvents = 'auto';
+    updateTimeConvert();
+  }
+}
+
+// ---- API Key ----
+function updateApiStatus() {
+  const el = document.getElementById('apiStatus');
+  if (apiKey) {
+    el.textContent = 'AI 就绪';
+    el.className = 'api-status set';
+  } else {
+    el.textContent = '未配置 API';
+    el.className = 'api-status unset';
+  }
+}
+
+function saveApiKey() {
+  const input = document.getElementById('apiKey');
+  apiKey = input.value.trim();
+  if (apiKey) {
+    localStorage.setItem('destiny_apikey', apiKey);
+  } else {
+    localStorage.removeItem('destiny_apikey');
+  }
+  updateApiStatus();
+}
+
+// ---- Data Helpers ----
+function getGender() {
+  const active = document.querySelector('.gender-btn-v2.active');
+  return active ? active.dataset.gender : '男';
+}
+
+function getTimeIndex() {
+  const unknown = document.getElementById('unknownTime').checked;
+  if (unknown) return 6; // Default 午时 when unknown
+
+  const ts = getTrueSolarTime();
+  if (!ts) return 6; // Fallback
+
+  return timeToIndex(ts.hour, ts.minute);
+}
+
+function getSolarDate() {
+  const y = parseInt(document.getElementById('birthYear').value);
+  const m = parseInt(document.getElementById('birthMonth').value);
+  const d = parseInt(document.getElementById('birthDay').value);
+  if (!y || !m || !d) return null;
+  return y + '-' + m + '-' + d;
+}
+
+function getUserName() {
+  const name = document.getElementById('userName').value.trim();
+  return name || '匿名访客';
+}
+
+function getLocationName() {
+  const province = document.getElementById('birthProvince').value;
+  const cityVal = document.getElementById('birthCity').value;
+  if (!province && !cityVal) return '';
+  try {
+    const city = cityVal ? JSON.parse(cityVal).name : '';
+    return province + (city ? ' ' + city : '');
+  } catch(e) { return province; }
+}
+
+// ---- Brightness level ----
+function brightnessLevel(b) {
+  if (!b) return 'medium';
+  const bright = ['庙','旺','得'];
+  const dim = ['陷','不'];
+  if (bright.includes(b)) return 'bright';
+  if (dim.includes(b)) return 'dim';
+  return 'medium';
+}
+
+// ---- Palace Grid Layout ----
+const branchPositions = {
+  '巳':{row:0,col:0},'午':{row:0,col:1},'未':{row:0,col:2},'申':{row:0,col:3},
+  '辰':{row:1,col:0},'酉':{row:1,col:3},'卯':{row:2,col:0},'戌':{row:2,col:3},
+  '寅':{row:3,col:0},'丑':{row:3,col:1},'子':{row:3,col:2},'亥':{row:3,col:3}
+};
+
+// ---- Generate Chart ----
+function generateChart() {
+  const solarDate = getSolarDate();
+  if (!solarDate) {
+    alert('请填写出生日期（年/月/日）');
+    return;
+  }
+
+  const timeIndex = getTimeIndex();
+  const gender = getGender();
+  const userName = getUserName();
+
+  if (typeof iztro === 'undefined' || !iztro.astro) {
+    document.getElementById('chartContent').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">排盘引擎加载失败</div><div class="empty-sub">请检查网络连接后刷新页面重试</div></div>';
+    return;
+  }
+
+  try {
+    currentChartData = iztro.astro.bySolar(solarDate, timeIndex, gender, true, 'zh-CN');
+  } catch(e) {
+    document.getElementById('chartContent').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">排盘失败</div><div class="empty-sub">' + e.message + '</div></div>';
+    return;
+  }
+
+  renderChart(currentChartData, userName);
+
+  if (apiKey) {
+    document.getElementById('aiCard').style.display = '';
+    runAiInterpretation(currentChartData, userName);
+  } else {
+    document.getElementById('aiCard').style.display = 'none';
+  }
+}
+
+// ---- Render Chart ----
+function renderChart(data, userName) {
+  const soulBranch = data.earthlyBranchOfSoulPalace;
+  const bodyBranch = data.earthlyBranchOfBodyPalace;
+  const loc = getLocationName();
+  document.getElementById('chartBadge').textContent = userName + ' · ' + data.solarDate + ' · ' + data.time;
+
+  let gridPalaces = {};
+  data.palaces.forEach(p => {
+    const pos = branchPositions[p.earthlyBranch];
+    if (pos) gridPalaces[p.earthlyBranch] = p;
+  });
+
+  function renderPalaceCell(palace) {
+    const isSoul = palace.earthlyBranch === soulBranch;
+    const isBody = palace.earthlyBranch === bodyBranch;
+    let cls = 'palace-cell';
+    if (isSoul) cls += ' soul-palace';
+    if (isBody) cls += ' body-palace';
+
+    let allStars = [];
+    if (palace.majorStars) allStars = allStars.concat(palace.majorStars);
+    if (palace.minorStars) allStars = allStars.concat(palace.minorStars);
+    if (palace.adjectiveStars) allStars = allStars.concat(palace.adjectiveStars);
+
+    const majorStars = allStars.filter(s =>
+      s.type==='major'||s.type==='tianma'||s.type==='lucun'||s.type==='soft'||s.type==='tough'
+    );
+    const otherStars = allStars.filter(s =>
+      s.type==='helper'||s.type==='adjective'||s.type==='flower'
+    );
+
+    let starsHTML = '';
+    if (majorStars.length > 0) {
+      starsHTML += '<div class="palace-stars">';
+      majorStars.forEach(s => {
+        const lvl = brightnessLevel(s.brightness);
+        const bm = s.brightness ? ' ['+s.brightness+']' : '';
+        starsHTML += '<span class="star-tag '+lvl+'">'+s.name+bm+'</span>';
+      });
+      starsHTML += '</div>';
+    }
+    if (otherStars.length > 0) {
+      const shown = otherStars.slice(0,3);
+      starsHTML += '<div class="palace-stars">';
+      shown.forEach(s => { starsHTML += '<span class="star-tag dim">'+s.name+'</span>'; });
+      if (otherStars.length > 3) starsHTML += '<span class="star-tag dim">+'+ (otherStars.length-3)+'</span>';
+      starsHTML += '</div>';
+    }
+
+    let badgesHTML = '';
+    if (isSoul) badgesHTML += '<span class="palace-badge soul-badge">命宫</span>';
+    if (isBody) badgesHTML += '<span class="palace-badge body-badge">身宫</span>';
+
+    return '<div class="'+cls+'"><div class="palace-header"><span class="palace-stem">'+(palace.heavenlyStem||'')+'</span><span class="palace-branch">'+palace.earthlyBranch+'</span></div><span class="palace-name">'+palace.name+'</span>'+starsHTML+'<div class="palace-badges">'+badgesHTML+'</div></div>';
+  }
+
+  let gridHTML = '';
+  for (let row=0; row<4; row++) {
+    for (let col=0; col<4; col++) {
+      if (row>=1 && row<=2 && col>=1 && col<=2) {
+        if (row===1 && col===1) {
+          gridHTML += '<div class="center-info">'+
+            '<div class="center-name">'+(loc||userName)+'</div>'+
+            '<div class="center-pillar">'+(data.chineseDate||'')+'</div>'+
+            '<div class="center-meta">'+
+            '<div class="center-meta-row"><span>命宫</span> '+(data.earthlyBranchOfSoulPalace||'—')+' <span>身宫</span> '+(data.earthlyBranchOfBodyPalace||'—')+'</div>'+
+            '<div class="center-meta-row"><span>五行局</span> '+(data.fiveElementsClass||'—')+'</div>'+
+            '<div class="center-meta-row"><span>命主</span> '+(data.soul||'—')+' <span>身主</span> '+(data.body||'—')+'</div>'+
+            '<div class="center-meta-row"><span>'+(data.sign||'')+'</span> <span>属'+(data.zodiac||'')+'</span></div>'+
+            '<div class="center-meta-row"><span>'+data.solarDate+'</span></div>'+
+            '</div></div>';
+        }
+        continue;
+      }
+      let palace = null;
+      for (const [branch,pos] of Object.entries(branchPositions)) {
+        if (pos.row===row && pos.col===col) { palace = gridPalaces[branch]; break; }
+      }
+      if (palace) {
+        gridHTML += renderPalaceCell(palace);
+      } else {
+        gridHTML += '<div class="palace-cell" style="opacity:0.3"><span class="palace-name" style="color:var(--text3)">—</span></div>';
+      }
+    }
+  }
+
+  document.getElementById('chartContent').innerHTML =
+    '<div class="chart-grid-outer"><div class="chart-grid">'+gridHTML+'</div></div>';
+}
+
+// ---- AI Interpretation ----
+async function runAiInterpretation(data, userName) {
+  const aiCard = document.getElementById('aiCard');
+  const aiContent = document.getElementById('aiContent');
+  aiCard.style.display = '';
+  aiContent.innerHTML = '<div class="interpretation-loading"><div class="spinner"></div><span class="loading-text">天机正在推演…</span></div>';
+
+  const summary = {
+    name: userName,
+    solarDate: data.solarDate,
+    lunarDate: data.lunarDate,
+    chineseDate: data.chineseDate,
+    time: data.time,
+    sign: data.sign,
+    zodiac: data.zodiac,
+    gender: getGender(),
+    fiveElementsClass: data.fiveElementsClass,
+    soulPalace: data.earthlyBranchOfSoulPalace,
+    bodyPalace: data.earthlyBranchOfBodyPalace,
+    soul: data.soul,
+    body: data.body,
+    palaces: data.palaces.map(p => ({
+      name: p.name,
+      branch: p.earthlyBranch,
+      stem: p.heavenlyStem,
+      majorStars: (p.majorStars||[]).map(s=>({name:s.name,brightness:s.brightness})),
+      minorStars: (p.minorStars||[]).map(s=>s.name),
+      isBodyPalace: p.isBodyPalace,
+      isOriginalPalace: p.isOriginalPalace,
+      changsheng12: p.changsheng12
+    }))
+  };
+
+  const prompt = '你是一位深谙紫微斗数的命理大师，言语风趣幽默，既有古风雅韵又接地气。\n\n请根据以下命盘数据，为用户"' + userName + '"做一份"仅供娱乐"的命运解读。要求：\n1. 语言风格：半文半白，带点玄学腔调，但不要过于严肃。可以适当使用"施主""阁下"等称呼。\n2. 篇幅：500-800字。\n3. 内容结构：\n   - 开篇：用四柱八字和命宫做引子，讲一句诗意的开场白\n   - 命格总览：根据命宫主星和五行局，描述整体命格格局\n   - 重点宫位：挑选3-4个有亮点的宫位（主星多、庙旺的），分别解读其含义\n   - 一句赠言：给一句古风的人生寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」\n5. 不要做任何医学、法律或金融建议\n6. 整体氛围轻松、有趣，让人会心一笑\n\n命盘数据：\n' + JSON.stringify(summary, null, 2);
+
+  try {
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: '你是紫微斗数命理大师，擅长用风趣幽默的古风语言解读命盘。所有解读仅供娱乐。' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 2048
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'API 请求失败 (' + response.status + ')');
+    }
+
+    const result = await response.json();
+    aiContent.innerHTML = '<div class="interpretation-content">' + escapeHtml(result.choices[0].message.content) + '</div>';
+  } catch(e) {
+    aiContent.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">解读请求失败</div><div class="empty-sub">'+escapeHtml(e.message)+'<br>请检查 API Key 是否正确，或稍后重试</div></div>';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---- Boot ----
+init();
+</script>
+
+</body>
+</html>
