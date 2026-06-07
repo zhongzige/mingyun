@@ -6,8 +6,8 @@
 <title>FIXER ESTUDIO · 命运预测</title>
 <style>
 /* =================================================================
-   命运预测 V1.2 — Apple Dark Design System
-   升级：风格选择器（5种口吻）+ 复制按钮
+   命运预测 V1.3 — Apple Dark Design System
+   升级：解读方向选择（10种方向）+ 风格组合 + 大限流年
    ================================================================= */
 
 @font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Regular');font-weight:400;font-display:swap}
@@ -421,6 +421,23 @@ body{
 
   </div>
 
+  <!-- Topic Selector -->
+  <div class="api-row" style="padding-top:0">
+    <span class="api-label">解读方向</span>
+    <select id="aiTopic" class="api-input" style="width:170px;font-size:12px;height:32px;cursor:pointer">
+      <option value="general" selected>综合解读</option>
+      <option value="personality">性格与命格</option>
+      <option value="career">事业运</option>
+      <option value="wealth">财运</option>
+      <option value="love">感情婚恋</option>
+      <option value="health">健康运</option>
+      <option value="home">田宅家庭</option>
+      <option value="social">人际关系</option>
+      <option value="inner">内心与福德</option>
+      <option value="horoscope">大限流年</option>
+    </select>
+  </div>
+
   <!-- Style Selector -->
   <div class="api-row" style="padding-top:0">
     <span class="api-label">解读风格</span>
@@ -681,6 +698,7 @@ const cityData = {
 let apiKey = localStorage.getItem('destiny_apikey') || '';
 let currentChartData = null;
 let currentInterpretation = '';
+let currentHoroscope = null;
 
 // ---- Init ----
 function init() {
@@ -1017,6 +1035,36 @@ function generateChart() {
 
   renderChart(currentChartData, userName);
 
+  // Calculate horoscope for "大限流年" topic
+  const topic = document.getElementById('aiTopic').value;
+  currentHoroscope = null;
+  if (topic === 'horoscope' && typeof currentChartData.horoscope === 'function') {
+    try {
+      const h = currentChartData.horoscope(new Date());
+      const simpleHoroscope = {
+        solarDate: h.solarDate,
+        lunarDate: h.lunarDate,
+        decadal: h.decadal ? {
+          index: h.decadal.index,
+          heavenlyStem: h.decadal.heavenlyStem,
+          earthlyBranch: h.decadal.earthlyBranch,
+          palaceNames: h.decadal.palaceNames,
+          mutagen: h.decadal.mutagen
+        } : null,
+        yearly: h.yearly ? {
+          index: h.yearly.index,
+          heavenlyStem: h.yearly.heavenlyStem,
+          earthlyBranch: h.yearly.earthlyBranch,
+          palaceNames: h.yearly.palaceNames,
+          mutagen: h.yearly.mutagen
+        } : null
+      };
+      currentHoroscope = simpleHoroscope;
+    } catch(e) {
+      currentHoroscope = null;
+    }
+  }
+
   if (apiKey) {
     document.getElementById('aiCard').style.display = '';
     runAiInterpretation(currentChartData, userName);
@@ -1150,7 +1198,23 @@ async function runAiInterpretation(data, userName) {
   };
 
   const style = document.getElementById('aiStyle').value;
+  const topic = document.getElementById('aiTopic').value;
 
+  // ---- Topic focus descriptions (appended to prompts) ----
+  const topicFocus = {
+    general: '这是一份综合命运解读，涵盖性格、事业、财运、感情、健康等各个方面。',
+    personality: '这是一份【性格与命格】专项解读。聚焦：\n1. 性格特质（外向/内敛、果决/犹豫、理性/感性）\n2. 先天禀赋（智商、情商、特殊才华）\n3. 命格高低与人生格局\n4. 精神世界与价值观\n请重点引用命宫的星曜做具体分析。',
+    career: '这是一份【事业运】专项解读。聚焦：\n1. 适合的职业方向和领域\n2. 职场生态（团队协作/独立作业、领导缘/同事缘）\n3. 事业起伏与转行/创业契机\n4. 贵人助力\n请重点引用官禄宫的星曜做具体分析，同时参考命宫和身宫。',
+    wealth: '这是一份【财运】专项解读。聚焦：\n1. 赚钱模式（稳定薪资/专业技能/投资投机）\n2. 理财观念与消费习惯\n3. 财富量级和守财能力\n4. 财运起伏\n请重点引用财帛宫的星曜做具体分析，同时参考福德宫。',
+    love: '这是一份【感情婚恋】专项解读。聚焦：\n1. 配偶特质（性格、外貌、职业倾向）\n2. 姻缘模式（早婚/晚婚、自由恋爱/亲友介绍）\n3. 婚姻质量与沟通\n4. 感情中的考验与祝福\n请重点引用夫妻宫的星曜做具体分析，同时参考福德宫。',
+    health: '这是一份【健康运】专项解读。聚焦：\n1. 先天体质强弱及薄弱环节\n2. 易患疾病与意外预防\n3. 养生方向和作息建议\n请重点引用疾厄宫的星曜做具体分析，特别注意长生十二神的位置。',
+    home: '这是一份【田宅家庭】专项解读。聚焦：\n1. 原生家庭关系与背景\n2. 房产运（买卖时机、置产能力）\n3. 居家环境与氛围\n4. 晚年生活与家庭幸福\n请重点引用田宅宫的星曜做具体分析，同时参考父母宫。',
+    social: '这是一份【人际关系】专项解读。聚焦：\n1. 兄弟姐妹与挚友的关系\n2. 同事、合作伙伴的缘分\n3. 晚辈、学生、子女的互动\n4. 朋友圈、粉丝、客户的关系\n请重点引用兄弟宫、交友宫(仆役)和子女宫的星曜做具体分析。',
+    inner: '这是一份【内心与福德】专项解读。聚焦：\n1. 内心快乐源泉（艺术、美食、探索等）\n2. 压力与心态管理\n3. 精神追求与价值观\n4. 晚年心境\n请重点引用福德宫的星曜做具体分析，同时参考命宫。',
+    horoscope: '这是一份【大限流年】专项解读。聚焦：\n1. 当前所处大限（十年运）的主旋律\n2. 今年流年运势在各方面的表现\n3. 未来可期的转折点\n4. 当下最适合发展的领域\n请重点引用运限数据中的大限和流年信息做具体分析。\n' + (currentHoroscope ? '运限数据：\n' + JSON.stringify(currentHoroscope, null, 2) : '')
+  };
+
+  // ---- Style prompts (base template) ----
   const prompts = {
     chat: '你是一位风趣幽默的命理师朋友。请根据以下命盘数据，为用户"' + userName + '"做一份"仅供娱乐"的命运解读。要求：\n1. 语言风格：现代轻松的白话，像朋友间微信聊天。多用口语词、语气词，可以带表情语气。\n2. 篇幅：400-600字。\n3. 内容结构：\n   - 开篇：用聊天语气打个招呼，说出生辰八字\n   - 命格总览：用大白话总结整体性格和运势方向\n   - 重点宫位：挑3-4个有趣的宫位聊聊\n   - 一句赠言：给一句真诚轻松的寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」',
     master: '你是一位深谙紫微斗数的专业命理师，言语得体，兼具专业深度与人文温度。请根据以下命盘数据，为用户"' + userName + '"做一份命运解读。要求：\n1. 语言风格：专业命理师口吻，半文半白但不故弄玄虚，让人信服又不失亲切。\n2. 篇幅：500-800字。\n3. 内容结构：\n   - 开篇：用四柱八字和命宫做引子，讲一句有分寸的开场白\n   - 命格总览：根据命宫主星和五行局，分析命格格局与人生走向\n   - 重点宫位：挑选3-4个关键宫位，分别做专业解读\n   - 一句赠言：给一句有深度的人生寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」\n5. 不要做任何医学、法律或金融建议',
@@ -1159,7 +1223,7 @@ async function runAiInterpretation(data, userName) {
     classic: '你是一位学贯古今的国学大儒，深谙紫微斗数与传统文化，言语典雅庄重，有古风而不晦涩。请根据以下命盘数据，为用户"' + userName + '"做一份命运解读。要求：\n1. 语言风格：纯正古风文言风，大气典雅。多用四字短语、对仗句式，引用经典诗词典故。力求庄重中见亲切。\n2. 篇幅：500-800字。\n3. 内容结构：\n   - 开篇：以七言或五言古诗开篇，点出命盘格局\n   - 命格总览：用典雅的文字描绘命格，多引经据典\n   - 重点宫位：选3-4个宫位，以儒者视角解读\n   - 一句赠言：引一句名诗或自拟一句古文作为赠别\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」'
   };
 
-  const prompt = prompts[style] + '\n\n命盘数据：\n' + JSON.stringify(summary, null, 2);
+  const prompt = prompts[style] + '\n\n' + topicFocus[topic] + '\n\n命盘数据：\n' + JSON.stringify(summary, null, 2);
 
   try {
     const response = await fetch('https://api.deepseek.com/chat/completions', {
