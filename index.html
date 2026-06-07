@@ -6,8 +6,8 @@
 <title>FIXER ESTUDIO · 命运预测</title>
 <style>
 /* =================================================================
-   命运预测 V1.1 — Apple Dark Design System
-   升级：年月日分栏 · 出生地真太阳时 · 精确时间 · 姓名
+   命运预测 V1.2 — Apple Dark Design System
+   升级：风格选择器（5种口吻）+ 复制按钮
    ================================================================= */
 
 @font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Regular');font-weight:400;font-display:swap}
@@ -421,6 +421,18 @@ body{
 
   </div>
 
+  <!-- Style Selector -->
+  <div class="api-row" style="padding-top:0">
+    <span class="api-label">解读风格</span>
+    <select id="aiStyle" class="api-input" style="width:170px;font-size:12px;height:32px;cursor:pointer">
+      <option value="chat">朋友聊天口吻</option>
+      <option value="master" selected>专业命理师口吻</option>
+      <option value="counselor">心理咨询师口吻</option>
+      <option value="roast">毒舌吐槽风</option>
+      <option value="classic">古文大儒风</option>
+    </select>
+  </div>
+
   <!-- API Key -->
   <div class="api-row" style="margin-top:16px;border-top:0.5px solid rgba(255,255,255,0.06);padding-top:14px">
     <span class="api-label">AI 解读密钥</span>
@@ -448,7 +460,10 @@ body{
 <div class="card" id="aiCard" style="display:none">
   <div class="card-header">
     <span class="card-title">AI 命运解读</span>
-    <span class="card-badge">DeepSeek</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="card-badge">DeepSeek</span>
+      <button class="btn btn-outline" id="btnCopyInterpretation" style="padding:3px 10px;font-size:10px;height:24px;display:none">复制</button>
+    </div>
   </div>
   <div id="aiContent"></div>
 </div>
@@ -665,6 +680,7 @@ const cityData = {
 // ---- State ----
 let apiKey = localStorage.getItem('destiny_apikey') || '';
 let currentChartData = null;
+let currentInterpretation = '';
 
 // ---- Init ----
 function init() {
@@ -681,6 +697,7 @@ function init() {
   // Event listeners
   document.getElementById('btnGenerate').addEventListener('click', generateChart);
   document.getElementById('btnSaveKey').addEventListener('click', saveApiKey);
+  document.getElementById('btnCopyInterpretation').addEventListener('click', copyInterpretation);
 
   document.getElementById('birthYear').addEventListener('change', updateDaySelect);
   document.getElementById('birthMonth').addEventListener('change', updateDaySelect);
@@ -1132,7 +1149,17 @@ async function runAiInterpretation(data, userName) {
     }))
   };
 
-  const prompt = '你是一位深谙紫微斗数的命理大师，言语风趣幽默，既有古风雅韵又接地气。\n\n请根据以下命盘数据，为用户"' + userName + '"做一份"仅供娱乐"的命运解读。要求：\n1. 语言风格：半文半白，带点玄学腔调，但不要过于严肃。可以适当使用"施主""阁下"等称呼。\n2. 篇幅：500-800字。\n3. 内容结构：\n   - 开篇：用四柱八字和命宫做引子，讲一句诗意的开场白\n   - 命格总览：根据命宫主星和五行局，描述整体命格格局\n   - 重点宫位：挑选3-4个有亮点的宫位（主星多、庙旺的），分别解读其含义\n   - 一句赠言：给一句古风的人生寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」\n5. 不要做任何医学、法律或金融建议\n6. 整体氛围轻松、有趣，让人会心一笑\n\n命盘数据：\n' + JSON.stringify(summary, null, 2);
+  const style = document.getElementById('aiStyle').value;
+
+  const prompts = {
+    chat: '你是一位风趣幽默的命理师朋友。请根据以下命盘数据，为用户"' + userName + '"做一份"仅供娱乐"的命运解读。要求：\n1. 语言风格：现代轻松的白话，像朋友间微信聊天。多用口语词、语气词，可以带表情语气。\n2. 篇幅：400-600字。\n3. 内容结构：\n   - 开篇：用聊天语气打个招呼，说出生辰八字\n   - 命格总览：用大白话总结整体性格和运势方向\n   - 重点宫位：挑3-4个有趣的宫位聊聊\n   - 一句赠言：给一句真诚轻松的寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」',
+    master: '你是一位深谙紫微斗数的专业命理师，言语得体，兼具专业深度与人文温度。请根据以下命盘数据，为用户"' + userName + '"做一份命运解读。要求：\n1. 语言风格：专业命理师口吻，半文半白但不故弄玄虚，让人信服又不失亲切。\n2. 篇幅：500-800字。\n3. 内容结构：\n   - 开篇：用四柱八字和命宫做引子，讲一句有分寸的开场白\n   - 命格总览：根据命宫主星和五行局，分析命格格局与人生走向\n   - 重点宫位：挑选3-4个关键宫位，分别做专业解读\n   - 一句赠言：给一句有深度的人生寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」\n5. 不要做任何医学、法律或金融建议',
+    counselor: '你是一位擅长结合命理的心理咨询师，温暖、共情、善于引导。请根据以下命盘数据，为用户"' + userName + '"做一份解读。要求：\n1. 语言风格：温柔共情，像心理咨询师一样倾听和引导。多用"你可能会...""这或许意味着..."等非确定性表达。\n2. 篇幅：500-700字。\n3. 内容结构：\n   - 开篇：从生辰八字自然引入，表达理解与陪伴\n   - 命格总览：从命宫主星切入性格特质，给予理解与肯定\n   - 重点宫位：选3-4个宫位，从心理成长角度解读，给出建设性建议\n   - 一句赠言：给一句温暖的成长寄语\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」\n5. 避免任何论断性预言，强调个人主观能动性',
+    roast: '你是一位毒舌但善良的命理师，以犀利吐槽和冷笑话著称。请根据以下命盘数据，为用户"' + userName + '"做一份"仅供娱乐"的毒舌解读。要求：\n1. 语言风格：犀利、毒舌、不留情面，但是带着善意。可以笑骂、反讽，让人又想打你又忍不住笑。\n2. 篇幅：400-600字。\n3. 内容结构：\n   - 开篇：用毒舌语气点出生辰八字\n   - 命格总览：毫不留情地分析命格中的"槽点"\n   - 重点宫位：挑3-4个宫位开涮，要真实要扎心\n   - 一句赠言：补一刀，或者猝不及防给一句温暖的话\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」',
+    classic: '你是一位学贯古今的国学大儒，深谙紫微斗数与传统文化，言语典雅庄重，有古风而不晦涩。请根据以下命盘数据，为用户"' + userName + '"做一份命运解读。要求：\n1. 语言风格：纯正古风文言风，大气典雅。多用四字短语、对仗句式，引用经典诗词典故。力求庄重中见亲切。\n2. 篇幅：500-800字。\n3. 内容结构：\n   - 开篇：以七言或五言古诗开篇，点出命盘格局\n   - 命格总览：用典雅的文字描绘命格，多引经据典\n   - 重点宫位：选3-4个宫位，以儒者视角解读\n   - 一句赠言：引一句名诗或自拟一句古文作为赠别\n4. 必须在开头加上「⚠️ 仅供娱乐，命运在自己手中」'
+  };
+
+  const prompt = prompts[style] + '\n\n命盘数据：\n' + JSON.stringify(summary, null, 2);
 
   try {
     const response = await fetch('https://api.deepseek.com/chat/completions', {
@@ -1144,7 +1171,7 @@ async function runAiInterpretation(data, userName) {
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
-          { role: 'system', content: '你是紫微斗数命理大师，擅长用风趣幽默的古风语言解读命盘。所有解读仅供娱乐。' },
+          { role: 'system', content: '你是紫微斗数解读专家。你的解读基于命盘数据，所有内容仅供娱乐。根据用户选择的风格调整语气，忠于命盘数据不编造。' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.8,
@@ -1158,10 +1185,26 @@ async function runAiInterpretation(data, userName) {
     }
 
     const result = await response.json();
-    aiContent.innerHTML = '<div class="interpretation-content">' + escapeHtml(result.choices[0].message.content) + '</div>';
+    currentInterpretation = result.choices[0].message.content;
+    aiContent.innerHTML = '<div class="interpretation-content">' + escapeHtml(currentInterpretation) + '</div>';
+    document.getElementById('btnCopyInterpretation').style.display = '';
   } catch(e) {
+    document.getElementById('btnCopyInterpretation').style.display = 'none';
     aiContent.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">解读请求失败</div><div class="empty-sub">'+escapeHtml(e.message)+'<br>请检查 API Key 是否正确，或稍后重试</div></div>';
   }
+}
+
+function copyInterpretation() {
+  if (!currentInterpretation) return;
+  navigator.clipboard.writeText(currentInterpretation).then(() => {
+    const btn = document.getElementById('btnCopyInterpretation');
+    btn.textContent = '已复制';
+    setTimeout(() => { btn.textContent = '复制'; }, 1500);
+  }).catch(() => {
+    const btn = document.getElementById('btnCopyInterpretation');
+    btn.textContent = '失败';
+    setTimeout(() => { btn.textContent = '复制'; }, 1500);
+  });
 }
 
 function escapeHtml(str) {
