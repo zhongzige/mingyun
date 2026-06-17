@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FIXER ESTUDIO · 命运预测</title>
+<title>FIXER ESTUDIO · 命运预测 V2.2</title>
 <style>
 /* =================================================================
-   命运预测 V2.1 — Starry Dark Gold Theme
+   命运预测 V2.2 — Starry Dark Gold Theme
    星穹暗金风 · 深紫背景 · 金色点缀 · 星空粒子
    ================================================================= */
 @font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Regular');font-weight:400;font-display:swap}
@@ -310,6 +310,15 @@ body::after{
 .footer-text{font-size:10px;color:var(--text3);letter-spacing:-0.06px}
 .footer-link{color:var(--accent-text);text-decoration:none;font-size:10px}
 .footer-link:hover{text-decoration:underline}
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--card);border:0.5px solid rgba(212,175,55,0.2);
+  border-radius:var(--radius);padding:10px 24px;font-size:13px;color:var(--text);
+  z-index:2000;box-shadow:0 8px 32px rgba(0,0,0,0.7);opacity:0;
+  transition:all 0.3s ease;pointer-events:none;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:700px){
   .chart-grid{grid-template-columns:1fr 1fr;gap:4px}
   .center-info{grid-column:1/3;grid-row:auto;min-height:100px}
@@ -467,6 +476,7 @@ body::after{
     <span class="card-title">AI 命运解读</span>
     <div style="display:flex;gap:8px;align-items:center">
       <span class="card-badge">DeepSeek</span>
+      <button class="btn btn-outline" id="btnRetryAi" style="padding:3px 10px;font-size:10px;height:24px;display:none">重新解读</button>
       <button class="btn btn-outline" id="btnCopyInterpretation" style="padding:3px 10px;font-size:10px;height:24px;display:none">复制</button>
     </div>
   </div>
@@ -488,13 +498,15 @@ body::after{
 
 <!-- Star Tooltip -->
 <div class="star-tooltip" id="starTooltip"></div>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-<!-- iztro CDN -->
-<script src="https://cdn.jsdelivr.net/npm/iztro/dist/iztro.min.js"></script>
+<!-- iztro CDN (锁定 2.4.4 版本，避免上游更新破坏 API) -->
+<script src="https://cdn.jsdelivr.net/npm/iztro@2.4.4/dist/iztro.min.js"></script>
 
 <script>
 /* =================================================================
-   命运预测 V2.0 — Main Logic
+   命运预测 V2.2 — Main Logic
    ================================================================= */
 
 // ===== STAR DICTIONARY =====
@@ -578,6 +590,62 @@ let currentInterpretation = '';
 let currentHoroscope = null;
 let lastFortuneDate = localStorage.getItem('fortune_date') || '';
 let lastFortuneNote = localStorage.getItem('fortune_note') || '';
+let lastFortuneSub = localStorage.getItem('fortune_sub') || '';
+let isAiLoading = false; // AI 请求防重复
+
+// ===== 输入持久化 =====
+const INPUT_KEY = 'destiny_input_v22';
+const AI_CACHE_KEY = 'destiny_ai_cache_v22';
+
+function saveInput() {
+  const data = {
+    userName: document.getElementById('userName').value,
+    birthYear: document.getElementById('birthYear').value,
+    birthMonth: document.getElementById('birthMonth').value,
+    birthDay: document.getElementById('birthDay').value,
+    birthProvince: document.getElementById('birthProvince').value,
+    birthCity: document.getElementById('birthCity').value,
+    birthHour: document.getElementById('birthHour').value,
+    birthMinute: document.getElementById('birthMinute').value,
+    unknownTime: document.getElementById('unknownTime').checked,
+    gender: getGender(),
+    aiTopic: document.getElementById('aiTopic').value,
+    aiStyle: document.getElementById('aiStyle').value,
+  };
+  try { localStorage.setItem(INPUT_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function loadInput() {
+  try {
+    const raw = localStorage.getItem(INPUT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+// ===== AI 结果缓存 =====
+function saveAiCache(inputSignature, interpretation) {
+  try {
+    localStorage.setItem(AI_CACHE_KEY, JSON.stringify({
+      sig: inputSignature,
+      text: interpretation,
+      time: Date.now()
+    }));
+  } catch(e) {} // 解读文本可能较长，超 quota 静默失败
+}
+
+function loadAiCache() {
+  try {
+    const raw = localStorage.getItem(AI_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function getInputSignature() {
+  return [getSolarDate(), getTimeIndex(), getGender(), getUserName(),
+    document.getElementById('aiTopic').value, document.getElementById('aiStyle').value].join('|');
+}
 
 // ===== Init =====
 function init() {
@@ -594,28 +662,64 @@ function init() {
   document.getElementById('btnGenerate').addEventListener('click', generateChart);
   document.getElementById('btnSaveKey').addEventListener('click', saveApiKey);
   document.getElementById('btnCopyInterpretation').addEventListener('click', copyInterpretation);
+  const btnRetry = document.getElementById('btnRetryAi');
+  if (btnRetry) btnRetry.addEventListener('click', () => { if (currentChartData) runAiInterpretation(currentChartData, getUserName()); });
 
-  document.getElementById('birthYear').addEventListener('change', updateDaySelect);
-  document.getElementById('birthMonth').addEventListener('change', updateDaySelect);
-  document.getElementById('birthProvince').addEventListener('change', updateCitySelect);
-  document.getElementById('birthCity').addEventListener('change', updateTimeConvert);
-  document.getElementById('birthHour').addEventListener('change', updateTimeConvert);
-  document.getElementById('birthMinute').addEventListener('change', updateTimeConvert);
-  document.getElementById('unknownTime').addEventListener('change', toggleUnknownTime);
+  document.getElementById('birthYear').addEventListener('change', () => { updateDaySelect(); saveInput(); });
+  document.getElementById('birthMonth').addEventListener('change', () => { updateDaySelect(); saveInput(); });
+  document.getElementById('birthProvince').addEventListener('change', () => { updateCitySelect(); saveInput(); });
+  document.getElementById('birthCity').addEventListener('change', () => { updateTimeConvert(); saveInput(); });
+  document.getElementById('birthHour').addEventListener('change', () => { updateTimeConvert(); saveInput(); });
+  document.getElementById('birthMinute').addEventListener('change', () => { updateTimeConvert(); saveInput(); });
+  document.getElementById('unknownTime').addEventListener('change', () => { toggleUnknownTime(); saveInput(); });
+  document.getElementById('userName').addEventListener('input', saveInput);
+  document.getElementById('aiTopic').addEventListener('change', saveInput);
+  document.getElementById('aiStyle').addEventListener('change', saveInput);
 
   document.querySelectorAll('.gender-btn-v2').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.gender-btn-v2').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      saveInput();
     });
   });
 
-  document.getElementById('birthYear').value = '2000';
-  document.getElementById('birthMonth').value = '1';
-  updateDaySelect();
-  document.getElementById('birthDay').value = '1';
-  document.getElementById('birthHour').value = '12';
-  document.getElementById('birthMinute').value = '0';
+  // 恢复上次输入
+  const saved = loadInput();
+  if (saved) {
+    if (saved.birthYear) document.getElementById('birthYear').value = saved.birthYear;
+    if (saved.birthMonth) document.getElementById('birthMonth').value = saved.birthMonth;
+    updateDaySelect();
+    if (saved.birthDay) document.getElementById('birthDay').value = saved.birthDay;
+    if (saved.birthProvince) { document.getElementById('birthProvince').value = saved.birthProvince; updateCitySelect(); }
+    if (saved.birthCity) document.getElementById('birthCity').value = saved.birthCity;
+    if (saved.birthHour) document.getElementById('birthHour').value = saved.birthHour;
+    if (saved.birthMinute) document.getElementById('birthMinute').value = saved.birthMinute;
+    if (saved.userName) document.getElementById('userName').value = saved.userName;
+    if (saved.aiTopic) document.getElementById('aiTopic').value = saved.aiTopic;
+    if (saved.aiStyle) document.getElementById('aiStyle').value = saved.aiStyle;
+    if (saved.unknownTime) { document.getElementById('unknownTime').checked = true; toggleUnknownTime(); }
+    if (saved.gender) {
+      document.querySelectorAll('.gender-btn-v2').forEach(b => {
+        b.classList.toggle('active', b.dataset.gender === saved.gender);
+      });
+    }
+    updateTimeConvert();
+  } else {
+    // 默认值
+    document.getElementById('birthYear').value = '2000';
+    document.getElementById('birthMonth').value = '1';
+    updateDaySelect();
+    document.getElementById('birthDay').value = '1';
+    document.getElementById('birthHour').value = '12';
+    document.getElementById('birthMinute').value = '0';
+  }
+
+  // 恢复上次 AI 解读缓存
+  const aiCache = loadAiCache();
+  if (aiCache && aiCache.text) {
+    currentInterpretation = aiCache.text;
+  }
 
   // Close tooltip on click outside
   document.addEventListener('click', (e) => {
@@ -630,7 +734,7 @@ function updateFortuneSlip() {
   const today = new Date().toISOString().split('T')[0];
   if (lastFortuneDate === today && lastFortuneNote) {
     document.getElementById('fortuneSlug').textContent = lastFortuneNote;
-    document.getElementById('fortuneSub').textContent = '今日已签 · 明日再来';
+    document.getElementById('fortuneSub').textContent = lastFortuneSub || '今日已签 · 明日再来';
     document.getElementById('fortuneHint').style.display = '';
     document.getElementById('fortuneSlip').style.cursor = 'default';
     document.getElementById('fortuneSlip').style.opacity = '0.6';
@@ -649,8 +753,10 @@ function drawFortuneSlip() {
   document.getElementById('fortuneSub').textContent = slip.sub;
   localStorage.setItem('fortune_date', today);
   localStorage.setItem('fortune_note', slip.slug);
+  localStorage.setItem('fortune_sub', slip.sub);
   lastFortuneDate = today;
   lastFortuneNote = slip.slug;
+  lastFortuneSub = slip.sub;
   updateFortuneSlip();
 }
 
@@ -674,7 +780,7 @@ function toggleUnknownTime(){const u=document.getElementById('unknownTime').chec
 
 // ===== API KEY =====
 function updateApiStatus(){const e=document.getElementById('apiStatus');if(apiKey){e.textContent='AI 就绪';e.className='api-status set'}else{e.textContent='未配置 API';e.className='api-status unset'}}
-function saveApiKey(){const i=document.getElementById('apiKey');apiKey=i.value.trim();if(apiKey)localStorage.setItem('destiny_apikey',apiKey);else localStorage.removeItem('destiny_apikey');updateApiStatus()}
+function saveApiKey(){const i=document.getElementById('apiKey');apiKey=i.value.trim();if(apiKey)localStorage.setItem('destiny_apikey',apiKey);else localStorage.removeItem('destiny_apikey');updateApiStatus();showToast(apiKey?'密钥已保存':'密钥已清除')}
 
 // ===== DATA HELPERS =====
 function getGender(){const a=document.querySelector('.gender-btn-v2.active');return a?a.dataset.gender:'男'}
@@ -727,7 +833,8 @@ const branchPositions={
 // ===== GENERATE CHART =====
 function generateChart(){
   const solarDate=getSolarDate();
-  if(!solarDate){alert('请填写出生日期（年/月/日）');return}
+  if(!solarDate){showToast('请填写出生日期（年/月/日）');return}
+  saveInput();
   const timeIndex=getTimeIndex();
   const gender=getGender();
   const userName=getUserName();
@@ -735,18 +842,35 @@ function generateChart(){
     document.getElementById('chartContent').innerHTML='<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">排盘引擎加载失败</div><div class="empty-sub">请检查网络连接后刷新页面重试</div></div>';
     return
   }
-  try{currentChartData=iztro.astro.bySolar(solarDate,timeIndex,gender,true,'zh-CN')}
-  catch(e){document.getElementById('chartContent').innerHTML='<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">排盘失败</div><div class="empty-sub">'+e.message+'</div></div>';return}
-  renderChart(currentChartData,userName);
-  renderRadar(currentChartData);
+  let data;
+  try{data=iztro.astro.bySolar(solarDate,timeIndex,gender,true,'zh-CN')}
+  catch(e){document.getElementById('chartContent').innerHTML='<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">排盘失败</div><div class="empty-sub">'+escapeHtml(e.message)+'</div></div>';return}
+  currentChartData=data;
+  renderChart(data,userName);
+  renderRadar(data);
   const topic=document.getElementById('aiTopic').value;
   currentHoroscope=null;
-  if(topic==='horoscope'&&typeof currentChartData.horoscope==='function'){
-    try{const h=currentChartData.horoscope(new Date());currentHoroscope={solarDate:h.solarDate,lunarDate:h.lunarDate,decadal:h.decadal?{index:h.decadal.index,heavenlyStem:h.decadal.heavenlyStem,earthlyBranch:h.decadal.earthlyBranch,palaceNames:h.decadal.palaceNames,mutagen:h.decadal.mutagen}:null,yearly:h.yearly?{index:h.yearly.index,heavenlyStem:h.yearly.heavenlyStem,earthlyBranch:h.yearly.earthlyBranch,palaceNames:h.yearly.palaceNames,mutagen:h.yearly.mutagen}:null}}
+  if(topic==='horoscope'&&typeof data.horoscope==='function'){
+    try{const h=data.horoscope(new Date());currentHoroscope={solarDate:h.solarDate,lunarDate:h.lunarDate,decadal:h.decadal?{index:h.decadal.index,heavenlyStem:h.decadal.heavenlyStem,earthlyBranch:h.decadal.earthlyBranch,palaceNames:h.decadal.palaceNames,mutagen:h.decadal.mutagen}:null,yearly:h.yearly?{index:h.yearly.index,heavenlyStem:h.yearly.heavenlyStem,earthlyBranch:h.yearly.earthlyBranch,palaceNames:h.yearly.palaceNames,mutagen:h.yearly.mutagen}:null}}
     catch(e){currentHoroscope=null}
   }
-  if(apiKey){document.getElementById('aiCard').style.display='';runAiInterpretation(currentChartData,userName)}
-  else{document.getElementById('aiCard').style.display='none'}
+
+  // AI 解读：检查缓存是否匹配当前输入
+  if(apiKey){
+    document.getElementById('aiCard').style.display='';
+    const sig = getInputSignature();
+    const cache = loadAiCache();
+    if (cache && cache.sig === sig && cache.text) {
+      // 缓存命中，直接显示，不消耗 API
+      currentInterpretation = cache.text;
+      renderAiContent(cache.text);
+    } else {
+      // 缓存不匹配，发起请求
+      runAiInterpretation(data,userName);
+    }
+  } else {
+    document.getElementById('aiCard').style.display='none';
+  }
 }
 
 // ===== RENDER CHART (with star tooltip) =====
@@ -769,8 +893,8 @@ function renderChart(data,userName){
     const majorStars=allStars.filter(s=>s.type==='major'||s.type==='tianma'||s.type==='lucun'||s.type==='soft'||s.type==='tough');
     const otherStars=allStars.filter(s=>s.type==='helper'||s.type==='adjective'||s.type==='flower');
     let starsHTML='';
-    if(majorStars.length>0){starsHTML+='<div class="palace-stars">';majorStars.forEach(s=>{const lvl=brightnessLevel(s.brightness);const bm=s.brightness?' ['+s.brightness+']':'';starsHTML+='<span class="star-tag '+lvl+' star-clickable" onclick="event.stopPropagation();showStarTooltip(event,\''+s.name+'\')">'+s.name+bm+'</span>'});starsHTML+='</div>'}
-    if(otherStars.length>0){const shown=otherStars.slice(0,3);starsHTML+='<div class="palace-stars">';shown.forEach(s=>{starsHTML+='<span class="star-tag dim star-clickable" onclick="event.stopPropagation();showStarTooltip(event,\''+s.name+'\')">'+s.name+'</span>'});if(otherStars.length>3)starsHTML+='<span class="star-tag dim">+'+ (otherStars.length-3)+'</span>';starsHTML+='</div>'}
+    if(majorStars.length>0){starsHTML+='<div class="palace-stars">';majorStars.forEach(s=>{const lvl=brightnessLevel(s.brightness);const bm=s.brightness?' ['+s.brightness+']':'';starsHTML+='<span class="star-tag '+lvl+' star-clickable" data-star="'+escapeAttr(s.name)+'">'+escapeHtml(s.name)+bm+'</span>'});starsHTML+='</div>'}
+    if(otherStars.length>0){const shown=otherStars.slice(0,3);starsHTML+='<div class="palace-stars">';shown.forEach(s=>{starsHTML+='<span class="star-tag dim star-clickable" data-star="'+escapeAttr(s.name)+'">'+escapeHtml(s.name)+'</span>'});if(otherStars.length>3)starsHTML+='<span class="star-tag dim">+'+ (otherStars.length-3)+'</span>';starsHTML+='</div>'}
     let badgesHTML='';
     if(isSoul)badgesHTML+='<span class="palace-badge soul-badge">命宫</span>';
     if(isBody)badgesHTML+='<span class="palace-badge body-badge">身宫</span>';
@@ -790,6 +914,13 @@ function renderChart(data,userName){
     else{gridHTML+='<div class="palace-cell" style="opacity:0.3"><span class="palace-name" style="color:var(--text3)">—</span></div>'}
   }}
   document.getElementById('chartContent').innerHTML='<div class="chart-grid-outer"><div class="chart-grid">'+gridHTML+'</div></div>';
+  // 事件委托：星曜点击
+  document.getElementById('chartContent').querySelectorAll('.star-clickable').forEach(el=>{
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      showStarTooltip(e, el.dataset.star);
+    });
+  });
 }
 
 // ===== STAR TOOLTIP =====
@@ -852,9 +983,35 @@ function renderRadar(data){
 }
 
 // ===== AI INTERPRETATION =====
+// 简单 markdown 渲染：**加粗** → <strong>，换行保留（CSS pre-wrap）
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  // **加粗**
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // 标题行（开头是 # 或 ##）
+  html = html.replace(/^#{1,3}\s+(.+)$/gm, '<strong style="color:var(--accent)">$1</strong>');
+  return html;
+}
+
+function renderAiContent(text) {
+  const aiContent = document.getElementById('aiContent');
+  aiContent.innerHTML = '<div class="interpretation-content">' + renderMarkdown(text) + '</div>';
+  document.getElementById('btnCopyInterpretation').style.display = '';
+  document.getElementById('btnRetryAi').style.display = '';
+}
+
 async function runAiInterpretation(data,userName){
+  if (isAiLoading) return; // 防重复
+  isAiLoading = true;
+  const btnGen = document.getElementById('btnGenerate');
+  btnGen.disabled = true;
+  btnGen.textContent = '推演中…';
+
   const aiCard=document.getElementById('aiCard');const aiContent=document.getElementById('aiContent');
-  aiCard.style.display='';aiContent.innerHTML='<div class="interpretation-loading"><div class="spinner"></div><span class="loading-text">天机正在推演…</span></div>';
+  aiCard.style.display='';
+  aiContent.innerHTML='<div class="interpretation-loading"><div class="spinner"></div><span class="loading-text">天机正在推演…</span></div>';
+  document.getElementById('btnCopyInterpretation').style.display='none';
+  document.getElementById('btnRetryAi').style.display='none';
   const style=document.getElementById('aiStyle').value;const topic=document.getElementById('aiTopic').value;
   const topicFocus={
     general:'这是一份综合命运解读，涵盖性格、事业、财运、感情、健康等各个方面。',personality:'这是一份【性格与命格】专项解读。聚焦：性格特质、先天禀赋、命格高低与人生格局、精神世界与价值观。请重点引用命宫的星曜做具体分析。',career:'这是一份【事业运】专项解读。聚焦：适合的职业方向和领域、职场生态、事业起伏与转行创业契机、贵人助力。请重点引用官禄宫的星曜做具体分析，同时参考命宫和身宫。',wealth:'这是一份【财运】专项解读。聚焦：赚钱模式、理财观念与消费习惯、财富量级和守财能力、财运起伏。请重点引用财帛宫的星曜做具体分析，同时参考福德宫。',love:'这是一份【感情婚恋】专项解读。聚焦：配偶特质、姻缘模式、婚姻质量与沟通、感情中的考验与祝福。请重点引用夫妻宫的星曜做具体分析，同时参考福德宫。',health:'这是一份【健康运】专项解读。聚焦：先天体质强弱及薄弱环节、易患疾病与意外预防、养生方向和作息建议。请重点引用疾厄宫的星曜做具体分析，特别注意长生十二神的位置。',home:'这是一份【田宅家庭】专项解读。聚焦：原生家庭关系与背景、房产运、居家环境与氛围、晚年生活与家庭幸福。请重点引用田宅宫的星曜做具体分析，同时参考父母宫。',social:'这是一份【人际关系】专项解读。聚焦：兄弟姐妹与挚友的关系、同事合作伙伴的缘分、晚辈学生子女的互动、朋友圈粉丝客户的关系。请重点引用兄弟宫、交友宫和子女宫的星曜做具体分析。',inner:'这是一份【内心与福德】专项解读。聚焦：内心快乐源泉、压力与心态管理、精神追求与价值观、晚年心境。请重点引用福德宫的星曜做具体分析，同时参考命宫。',horoscope:'这是一份【大限流年】专项解读。聚焦：当前所处大限（十年运）的主旋律、今年流年运势、未来可期的转折点、当下最适合发展的领域。请重点引用运限数据中的大限和流年信息做具体分析。\n'+(currentHoroscope?'运限数据：\n'+JSON.stringify(currentHoroscope,null,2):'')
@@ -864,22 +1021,67 @@ async function runAiInterpretation(data,userName){
   };
   const summary={name:userName,solarDate:data.solarDate,lunarDate:data.lunarDate,chineseDate:data.chineseDate,time:data.time,sign:data.sign,zodiac:data.zodiac,gender:getGender(),fiveElementsClass:data.fiveElementsClass,soulPalace:data.earthlyBranchOfSoulPalace,bodyPalace:data.earthlyBranchOfBodyPalace,soul:data.soul,body:data.body,palaces:data.palaces.map(p=>({name:p.name,branch:p.earthlyBranch,stem:p.heavenlyStem,majorStars:(p.majorStars||[]).map(s=>({name:s.name,brightness:s.brightness})),minorStars:(p.minorStars||[]).map(s=>s.name),isBodyPalace:p.isBodyPalace,isOriginalPalace:p.isOriginalPalace,changsheng12:p.changsheng12}))};
   const prompt=prompts[style]+'\n\n'+topicFocus[topic]+'\n\n🎭 额外任务：请根据命盘特征，推荐一位历史上或当代的名人（真实人物），其人生走向与这位用户最为相似。要求：先简要介绍名人生平（出生年份、主要成就、人生重大转折），再说明为什么ta的人生走向与用户的命盘吻合。放在解读末尾，标题为"与你相似的命运"。\n\n命盘数据：\n'+JSON.stringify(summary,null,2);
+
+  // 60 秒超时
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
   try{
-    const response=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:'你是紫微斗数解读专家。你的解读基于命盘数据，所有内容仅供娱乐。根据用户选择的风格调整语气，忠于命盘数据不编造。'},{role:'user',content:prompt}],temperature:0.8,max_tokens:2048})});
+    const response=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:'你是紫微斗数解读专家。你的解读基于命盘数据，所有内容仅供娱乐。根据用户选择的风格调整语气，忠于命盘数据不编造。'},{role:'user',content:prompt}],temperature:0.8,max_tokens:4096}),signal:controller.signal});
+    clearTimeout(timeoutId);
     if(!response.ok){const err=await response.json().catch(()=>({}));throw new Error(err.error?.message||'API 请求失败 ('+response.status+')')}
     const result=await response.json();
     currentInterpretation=result.choices[0].message.content;
-    aiContent.innerHTML='<div class="interpretation-content">'+escapeHtml(currentInterpretation)+'</div>';
-    document.getElementById('btnCopyInterpretation').style.display='';
+    // 缓存解读结果
+    saveAiCache(getInputSignature(), currentInterpretation);
+    renderAiContent(currentInterpretation);
   }catch(e){
+    clearTimeout(timeoutId);
     document.getElementById('btnCopyInterpretation').style.display='none';
-    aiContent.innerHTML='<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">解读请求失败</div><div class="empty-sub">'+escapeHtml(e.message)+'<br>请检查 API Key 是否正确，或稍后重试</div></div>'
+    const isTimeout = e.name === 'AbortError';
+    document.getElementById('btnRetryAi').style.display = '';
+    aiContent.innerHTML='<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">'+(isTimeout?'请求超时':'解读请求失败')+'</div><div class="empty-sub">'+escapeHtml(isTimeout?'AI 响应超过 60 秒，请点击"重新解读"重试':e.message)+'<br>请检查 API Key 是否正确，或稍后重试</div></div>'
+  } finally {
+    isAiLoading = false;
+    btnGen.disabled = false;
+    btnGen.textContent = '立即起盘 · 解命运密码';
   }
 }
 
-function copyInterpretation(){if(!currentInterpretation)return;navigator.clipboard.writeText(currentInterpretation).then(()=>{const b=document.getElementById('btnCopyInterpretation');b.textContent='已复制';setTimeout(()=>b.textContent='复制',1500)}).catch(()=>{const b=document.getElementById('btnCopyInterpretation');b.textContent='失败';setTimeout(()=>b.textContent='复制',1500)})}
+function copyInterpretation(){
+  if(!currentInterpretation)return;
+  // 优先用 Clipboard API，失败时 fallback 到 textarea + execCommand
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(currentInterpretation).then(()=>{
+      const b=document.getElementById('btnCopyInterpretation');b.textContent='已复制';setTimeout(()=>b.textContent='复制',1500);
+      showToast('已复制到剪贴板');
+    }).catch(()=>{ fallbackCopy(); });
+  } else {
+    fallbackCopy();
+  }
+}
+
+function fallbackCopy(){
+  const ta=document.createElement('textarea');
+  ta.value=currentInterpretation;
+  ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');const b=document.getElementById('btnCopyInterpretation');b.textContent='已复制';setTimeout(()=>b.textContent='复制',1500);showToast('已复制到剪贴板')}
+  catch(e){showToast('复制失败，请手动选择文本')}
+  document.body.removeChild(ta);
+}
 
 function escapeHtml(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
+function escapeAttr(str){return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ===== TOAST =====
+let _toastTimer=null;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.classList.add('show');
+  if(_toastTimer){clearTimeout(_toastTimer);_toastTimer=null}
+  _toastTimer=setTimeout(()=>{el.classList.remove('show');_toastTimer=null},2200);
+}
 
 // ---- Boot ----
 init();
