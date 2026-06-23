@@ -3,11 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FIXER ESTUDIO · 命运预测 V2.2</title>
+<title>FIXER ESTUDIO · 命运预测 V3.3</title>
 <style>
 /* =================================================================
-   命运预测 V2.2 — Starry Dark Gold Theme
+   命运预测 V3.3 — Starry Dark Gold Theme
    星穹暗金风 · 深紫背景 · 金色点缀 · 星空粒子
+   V3.0 新增：八字四柱排盘 · 真实黄历日历 · 大运时间线
+   V3.1 新增：格局分析 · 紫微大运时间线 · 命运关键词词云
+   V3.2 新增：六爻起卦 · 墨黑朱砂竹简风 · 三种起卦方式
+   V3.3 新增：六爻专业断卦 · 旬空月建月破日冲暗动进退神
    ================================================================= */
 @font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Regular');font-weight:400;font-display:swap}
 @font-face{font-family:'SF Pro Display';src:local('SF Pro Display'),local('SFProDisplay-Semibold');font-weight:600;font-display:swap}
@@ -319,11 +323,312 @@ body::after{
   transition:all 0.3s ease;pointer-events:none;white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ===== BAZI 四柱排盘 ===== */
+.bazi-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;
+}
+.bazi-pillar{
+  background:var(--surface);border:0.5px solid rgba(212,175,55,0.1);
+  border-radius:var(--radius);padding:14px 10px;text-align:center;
+  display:flex;flex-direction:column;gap:6px;align-items:center;}
+.bazi-pillar-label{font-size:10px;color:var(--text3);letter-spacing:2px}
+.bazi-pillar-ganzhi{
+  font-size:22px;font-weight:500;color:var(--accent);
+  font-family:var(--font-display);letter-spacing:2px;line-height:1.4;
+}
+.bazi-pillar-shishen{
+  font-size:11px;color:var(--text2);padding:2px 8px;
+  background:rgba(212,175,55,0.08);border-radius:4px;
+}
+.bazi-pillar-nayin{font-size:10px;color:var(--text3)}
+.bazi-pillar.day-pillar{
+  border-color:rgba(212,175,55,0.35);
+  box-shadow:inset 0 0 0 1px rgba(212,175,55,0.08);
+}
+.bazi-pillar.day-pillar .bazi-pillar-ganzhi{color:#f3d99c}
+.bazi-pillar.day-pillar .bazi-pillar-label{color:var(--accent)}
+/* 五行统计 */
+.wuxing-stats{
+  display:flex;gap:10px;margin-bottom:18px;padding:16px;
+  background:rgba(212,175,55,0.04);border-radius:var(--radius);
+}
+.wuxing-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;
+}
+.wuxing-name{font-size:12px;color:var(--text2)}
+.wuxing-bar-bg{width:100%;max-width:50px;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden}
+.wuxing-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+.wuxing-count{font-size:15px;font-weight:600;color:var(--text)}
+.wuxing-item.lacking .wuxing-name{color:var(--danger)}
+.wuxing-item.lacking .wuxing-count{color:var(--danger)}
+.wuxing-item.dominant .wuxing-count{color:var(--accent)}
+.wx-metal{background:#d4af37}
+.wx-wood{background:#6b9a5c}
+.wx-water{background:#4a90d9}
+.wx-fire{background:#c44a3c}
+.wx-earth{background:#b8860b}
+.wuxing-summary{
+  font-size:11px;color:var(--text3);margin-bottom:16px;
+  padding:8px 12px;background:rgba(212,175,55,0.04);border-radius:6px;
+  line-height:1.6;
+}
+.wuxing-summary strong{color:var(--accent);font-weight:500}
+/* 大运排盘 */
+.dayun-section{margin-top:4px}
+.dayun-title{
+  font-size:12px;color:var(--text2);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.dayun-start-age{
+  font-size:10px;color:var(--text3);
+  padding:2px 8px;background:rgba(255,255,255,0.04);border-radius:3px;
+}
+.dayun-table{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.dayun-table::-webkit-scrollbar{height:4px}
+.dayun-table::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.dayun-cell{
+  flex-shrink:0;min-width:68px;background:var(--surface);
+  border:0.5px solid rgba(212,175,55,0.08);border-radius:var(--radius);
+  padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:4px;
+}
+.dayun-cell.current{
+  border-color:var(--accent);box-shadow:0 0 12px rgba(212,175,55,0.2);
+  background:rgba(212,175,55,0.06);
+}
+.dayun-age{font-size:10px;color:var(--text3)}
+.dayun-ganzhi{font-size:16px;font-weight:500;color:var(--accent);font-family:var(--font-display)}
+.dayun-year{font-size:9px;color:var(--text3)}
+.dayun-cell.current .dayun-age{color:var(--accent)}
+.dayun-cell.current .dayun-ganzhi{color:#f3d99c}
+/* ===== 黄历模块 ===== */
+.fortune-slip.almanac-mode{
+  cursor:default;text-align:left;padding:18px 24px;
+}
+.almanac-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:14px;padding-bottom:12px;
+  border-bottom:0.5px solid rgba(212,175,55,0.1);gap:16px;
+}
+.almanac-date-main{font-size:15px;font-weight:600;color:var(--text)}
+.almanac-date-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.almanac-ganzhi-block{text-align:right;flex-shrink:0}
+.almanac-ganzhi{
+  font-size:18px;font-weight:500;color:var(--accent);
+  font-family:var(--font-display);letter-spacing:2px;
+}
+.almanac-ganzhi-label{font-size:10px;color:var(--text3);margin-top:2px}
+.almanac-body{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.almanac-yi,.almanac-ji{display:flex;flex-direction:column;gap:6px}
+.almanac-label{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.almanac-label.yi{color:#6b9a5c}
+.almanac-label.ji{color:#c44a3c}
+.almanac-items{font-size:12px;color:var(--text2);line-height:1.7}
+.almanac-footer{
+  display:flex;flex-wrap:wrap;gap:8px 20px;
+  padding-top:12px;border-top:0.5px solid rgba(212,175,55,0.1);
+  font-size:11px;
+}
+.almanac-tag{display:flex;align-items:center;gap:4px;color:var(--text2)}
+.almanac-tag-label{color:var(--text3)}
+.almanac-tag-value{color:var(--accent);font-weight:500}
+.almanac-loading{font-size:12px;color:var(--text3);text-align:center;padding:20px}
+
+/* ===== 格局分析 (V3.1) ===== */
+.geju-list{display:flex;flex-direction:column;gap:10px}
+.geju-item{
+  display:flex;gap:14px;padding:14px 16px;
+  background:var(--surface);border:0.5px solid rgba(212,175,55,0.1);
+  border-radius:var(--radius);align-items:flex-start;
+}
+.geju-item.tier-high{border-left:3px solid #6b9a5c}
+.geju-item.tier-mid{border-left:3px solid var(--accent)}
+.geju-item.tier-flat{border-left:3px solid var(--text3)}
+.geju-item.tier-bad{border-left:3px solid #c44a3c}
+.geju-score{
+  flex-shrink:0;width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:600;font-family:var(--font-display);
+  border:1.5px solid;
+}
+.geju-item.tier-high .geju-score{color:#8db878;border-color:rgba(107,154,92,0.4);background:rgba(107,154,92,0.08)}
+.geju-item.tier-mid .geju-score{color:var(--accent);border-color:rgba(212,175,55,0.4);background:rgba(212,175,55,0.08)}
+.geju-item.tier-flat .geju-score{color:var(--text3);border-color:rgba(255,255,255,0.1)}
+.geju-item.tier-bad .geju-score{color:#c44a3c;border-color:rgba(196,74,60,0.4);background:rgba(196,74,60,0.08)}
+.geju-body{flex:1;min-width:0}
+.geju-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.geju-tier-tag{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:400}
+.geju-item.tier-high .geju-tier-tag{background:rgba(107,154,92,0.15);color:#8db878}
+.geju-item.tier-mid .geju-tier-tag{background:rgba(212,175,55,0.15);color:var(--accent)}
+.geju-item.tier-flat .geju-tier-tag{background:rgba(255,255,255,0.06);color:var(--text3)}
+.geju-item.tier-bad .geju-tier-tag{background:rgba(196,74,60,0.15);color:#d96a5c}
+.geju-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:4px}
+.geju-detail{font-size:11px;color:var(--text3);line-height:1.6}
+.geju-empty{font-size:13px;color:var(--text3);text-align:center;padding:24px}
+
+/* ===== 紫微大运时间线 (V3.1) ===== */
+.timeline-wrap{margin-top:4px}
+.timeline-svg{width:100%;overflow-x:auto;scrollbar-width:thin}
+.timeline-svg::-webkit-scrollbar{height:4px}
+.timeline-svg::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.timeline-legend{display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text3);flex-wrap:wrap}
+.timeline-legend-item{display:flex;align-items:center;gap:5px}
+.timeline-legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* ===== 命运关键词词云 (V3.1) ===== */
+.keyword-cloud{
+  display:flex;flex-wrap:wrap;gap:8px 12px;
+  padding:20px;justify-content:center;align-items:center;
+  min-height:80px;
+}
+.keyword-tag{
+  display:inline-block;padding:6px 14px;border-radius:20px;
+  font-weight:500;letter-spacing:0.5px;transition:transform 0.2s ease;
+  cursor:default;line-height:1.3;
+}
+.keyword-tag:hover{transform:translateY(-2px)}
+.keyword-tag.kw-xl{font-size:22px;color:#f3d99c;background:rgba(212,175,55,0.12);border:0.5px solid rgba(212,175,55,0.25)}
+.keyword-tag.kw-lg{font-size:18px;color:var(--accent);background:rgba(212,175,55,0.08);border:0.5px solid rgba(212,175,55,0.15)}
+.keyword-tag.kw-md{font-size:15px;color:var(--text);background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.06)}
+.keyword-tag.kw-sm{font-size:13px;color:var(--text2);background:rgba(255,255,255,0.03)}
+.keyword-tag.kw-bad{color:#d96a5c;background:rgba(196,74,60,0.08);border:0.5px solid rgba(196,74,60,0.15)}
+
+/* ===== 六爻模块 (V3.2 · 墨黑朱砂竹简风) ===== */
+.liuyao-card{
+  --ly-bg:#15110c;--ly-paper:#1c1812;--ly-vermilion:#b8341e;
+  --ly-bronze:#8a6c3a;--ly-jade:#5a8a6a;--ly-gold:#c69838;
+  --ly-ink:#d4c8a8;--ly-ink2:rgba(212,200,168,0.6);--ly-ink3:rgba(212,200,168,0.3);
+  background:var(--ly-bg)!important;border:0.5px solid rgba(184,52,30,0.15)!important;
+}
+.liuyao-card .card-title{color:var(--ly-gold)!important}
+.liuyao-card .card-badge{color:var(--ly-ink3)!important;border-color:rgba(184,52,30,0.2)!important}
+.liuyao-input{
+  padding:18px 22px;background:var(--ly-paper);border-radius:8px;margin-bottom:14px;
+  border:0.5px solid rgba(184,52,30,0.1);
+}
+.liuyao-question-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end}
+.liuyao-input-field{
+  flex:1;min-width:180px;background:var(--ly-bg);border:0.5px solid rgba(212,200,168,0.15);
+  border-radius:4px;padding:8px 12px;color:var(--ly-ink);font-size:13px;outline:none;
+  font-family:inherit;
+}
+.liuyao-input-field:focus{border-color:var(--ly-vermilion)}
+.liuyao-input-field::placeholder{color:var(--ly-ink3)}
+.liuyao-method-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.ly-method-btn{
+  padding:6px 14px;background:var(--ly-bg);border:0.5px solid rgba(212,200,168,0.15);
+  border-radius:4px;color:var(--ly-ink2);font-size:12px;cursor:pointer;transition:all 0.2s;
+  font-family:inherit;
+}
+.ly-method-btn:hover{border-color:var(--ly-vermilion);color:var(--ly-ink)}
+.ly-method-btn.active{background:rgba(184,52,30,0.12);border-color:var(--ly-vermilion);color:var(--ly-vermilion)}
+.ly-topic-select{
+  background:var(--ly-bg);border:0.5px solid rgba(212,200,168,0.15);border-radius:4px;
+  padding:6px 10px;color:var(--ly-ink);font-size:12px;cursor:pointer;font-family:inherit;outline:none;
+}
+.ly-topic-select option{background:var(--ly-bg)}
+.ly-cast-btn{
+  padding:8px 22px;background:linear-gradient(135deg,#b8341e,#8a2818);
+  border:none;border-radius:4px;color:#f5ecd6;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;font-family:inherit;letter-spacing:1px;
+}
+.ly-cast-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(184,52,30,0.3)}
+.ly-cast-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.ly-coin-area{display:flex;gap:16px;justify-content:center;padding:20px 0;min-height:80px;align-items:center}
+.ly-coin{
+  width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:bold;border:2px solid;transition:all 0.3s;
+}
+.ly-coin.yang{background:rgba(184,52,30,0.1);border-color:var(--ly-vermilion);color:var(--ly-vermilion)}
+.ly-coin.yin{background:rgba(212,200,168,0.05);border-color:var(--ly-ink3);color:var(--ly-ink2)}
+.ly-coin.flip{animation:lyFlip 0.6s ease}
+@keyframes lyFlip{0%{transform:rotateY(0)}50%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+.ly-coin-label{font-size:10px;color:var(--ly-ink3);text-align:center;margin-top:4px}
+.ly-toss-progress{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.ly-toss-dot{width:8px;height:8px;border-radius:50%;background:rgba(212,200,168,0.15);transition:all 0.3s}
+.ly-toss-dot.done{background:var(--ly-vermilion)}
+/* 卦象渲染 */
+.ly-gua-display{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px;
+  background:var(--ly-paper);border-radius:8px;margin-bottom:14px;
+  border:0.5px solid rgba(184,52,30,0.08);
+}
+.ly-gua-side{display:flex;flex-direction:column;align-items:center}
+.ly-gua-side-title{
+  font-size:13px;color:var(--ly-gold);margin-bottom:12px;
+  font-family:'STKaiti','KaiTi','PingFang SC',serif;letter-spacing:2px;
+}
+.ly-gua-name{
+  font-size:18px;color:var(--ly-ink);font-weight:600;margin-bottom:14px;
+  font-family:'STKaiti','KaiTi','PingFang SC',serif;letter-spacing:1px;
+}
+.ly-yao-list{display:flex;flex-direction:column-reverse;gap:3px;width:100%;max-width:280px}
+.ly-yao{
+  display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:3px;
+  transition:background 0.2s;position:relative;
+}
+.ly-yao:hover{background:rgba(212,200,168,0.04)}
+.ly-yao-num{font-size:11px;color:var(--ly-ink3);width:20px;text-align:center;flex-shrink:0;font-family:'STKaiti','KaiTi',serif}
+.ly-yao-line{flex-shrink:0;width:100px;display:flex;gap:4px;justify-content:center}
+.ly-yao-line .ly-bar{height:7px;border-radius:1px;background:var(--ly-bronze)}
+.ly-yao-line.yang .ly-bar{width:100px}
+.ly-yao-line.yin .ly-bar{width:44px}
+.ly-yao-line.yin .ly-gap{width:12px}
+.ly-yao.moving .ly-bar{background:var(--ly-vermilion)}
+.ly-yao.moving .ly-mark{color:var(--ly-vermilion);font-size:14px;font-weight:bold;margin-left:2px}
+.ly-yao-info{
+  flex:1;display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+  font-size:10px;font-family:'STKaiti','KaiTi',serif;
+}
+.ly-tag{padding:1px 5px;border-radius:2px;font-size:10px;line-height:1.4}
+.ly-tag.liuqin{background:rgba(198,152,56,0.12);color:var(--ly-gold)}
+.ly-tag.ganZhi{background:rgba(212,200,168,0.06);color:var(--ly-ink2)}
+.ly-tag.shishen{background:rgba(184,52,30,0.12);color:var(--ly-vermilion);font-weight:600}
+.ly-tag.shishen.ying{background:rgba(90,138,106,0.15);color:var(--ly-jade)}
+.ly-tag.liushen{background:rgba(212,200,168,0.04);color:var(--ly-ink3)}
+.ly-tag.yongshen{background:rgba(184,52,30,0.2);color:var(--ly-vermilion);font-weight:bold;border:0.5px solid var(--ly-vermilion)}
+.ly-tag.yuan{background:rgba(90,138,106,0.1);color:var(--ly-jade)}
+/* V3.3 专业层标签 */
+.ly-tag.pro-kong{background:rgba(138,108,58,0.15);color:#8a6c3a;border:0.5px dashed rgba(138,108,58,0.4)}
+.ly-tag.pro-po{background:rgba(184,52,30,0.18);color:#d96a5c;font-weight:600}
+.ly-tag.pro-chong{background:rgba(184,52,30,0.1);color:#c4786a}
+.ly-tag.pro-he{background:rgba(90,138,106,0.12);color:var(--ly-jade)}
+.ly-tag.pro-an{background:rgba(138,108,58,0.12);color:#a88c5a;font-style:italic}
+.ly-tag.pro-jin{background:rgba(198,152,56,0.18);color:var(--ly-gold);font-weight:600}
+.ly-tag.pro-tui{background:rgba(212,200,168,0.08);color:var(--ly-ink3);font-style:italic}
+.ly-empty{font-size:13px;color:var(--ly-ink3);text-align:center;padding:30px;font-family:'STKaiti','KaiTi',serif}
+.ly-result{
+  padding:16px 20px;background:var(--ly-paper);border-radius:8px;
+  border:0.5px solid rgba(184,52,30,0.08);font-family:'STKaiti','KaiTi','PingFang SC',serif;
+  line-height:1.8;font-size:13px;color:var(--ly-ink2);
+}
+.ly-result-title{font-size:14px;color:var(--ly-gold);margin-bottom:8px;font-weight:600}
+.ly-result-judge{padding:12px 16px;background:rgba(184,52,30,0.06);border-left:3px solid var(--ly-vermilion);border-radius:0 4px 4px 0;margin:10px 0;font-size:14px;color:var(--ly-ink)}
+.ly-result-detail{margin-top:10px;font-size:12px;color:var(--ly-ink3)}
+.ly-seal{
+  display:inline-block;padding:4px 12px;background:var(--ly-vermilion);color:#f5ecd6;
+  font-size:14px;font-weight:bold;border-radius:2px;font-family:'STKaiti','KaiTi',serif;
+  letter-spacing:2px;transform:rotate(-3deg);margin:10px 0;
+}
+
 @media(max-width:700px){
   .chart-grid{grid-template-columns:1fr 1fr;gap:4px}
   .center-info{grid-column:1/3;grid-row:auto;min-height:100px}
   .form-row{gap:8px}
   .radar-container{flex-direction:column;gap:16px}
+  .bazi-grid{gap:4px}
+  .bazi-pillar{padding:10px 4px}
+  .bazi-pillar-ganzhi{font-size:18px}
+  .almanac-body{grid-template-columns:1fr}
+  .almanac-header{flex-direction:column;gap:8px}
+  .almanac-ganzhi-block{text-align:left}
+  .wuxing-stats{gap:6px}
+  .geju-item{flex-direction:column;gap:8px}
+  .keyword-tag.kw-xl{font-size:18px}
+  .keyword-tag.kw-lg{font-size:15px}
+  .ly-gua-display{grid-template-columns:1fr;gap:14px}
+  .ly-yao-line{width:80px}
+  .ly-yao-line.yang .ly-bar{width:80px}
+  .ly-yao-line.yin .ly-bar{width:36px}
 }
 </style>
 </head>
@@ -345,12 +650,89 @@ body::after{
 <div class="main">
 <div class="main-inner">
 
-<!-- Fortune Slip -->
-<div class="fortune-slip" id="fortuneSlip" onclick="drawFortuneSlip()">
-  <div class="fortune-header">✦ 今日运势签</div>
-  <div class="fortune-slug" id="fortuneSlug">宜待机</div>
-  <div class="fortune-sub" id="fortuneSub">点击求签 · 每日一次</div>
-  <div class="fortune-hint" id="fortuneHint">今日已签 ✦ 明日再来</div>
+<!-- 今日黄历 -->
+<div class="fortune-slip almanac-mode" id="fortuneSlip">
+  <div class="almanac-loading" id="almanacLoading">正在读取今日黄历…</div>
+  <div id="almanacContent" style="display:none">
+    <div class="almanac-header">
+      <div>
+        <div class="almanac-date-main" id="almanacDateMain">--</div>
+        <div class="almanac-date-sub" id="almanacDateSub">--</div>
+      </div>
+      <div class="almanac-ganzhi-block">
+        <div class="almanac-ganzhi" id="almanacGanzhi">--</div>
+        <div class="almanac-ganzhi-label" id="almanacGanzhiLabel">日柱干支</div>
+      </div>
+    </div>
+    <div class="almanac-body">
+      <div class="almanac-yi">
+        <div class="almanac-label yi">✦ 宜</div>
+        <div class="almanac-items" id="almanacYi">--</div>
+      </div>
+      <div class="almanac-ji">
+        <div class="almanac-label ji">✦ 忌</div>
+        <div class="almanac-items" id="almanacJi">--</div>
+      </div>
+    </div>
+    <div class="almanac-footer" id="almanacFooter"></div>
+  </div>
+</div>
+
+<!-- 六爻起卦 (V3.2 · 独立入口，不需要生辰信息) -->
+<div class="card liuyao-card" id="liuyaoCard">
+  <div class="card-header">
+    <span class="card-title">六爻起卦 · 京房纳甲</span>
+    <span class="card-badge">当下问事 · 无需生辰</span>
+  </div>
+  <div class="liuyao-input">
+    <div class="liuyao-question-row">
+      <input type="text" id="lyQuestion" class="liuyao-input-field" placeholder="心中默念所问之事（可选）…" maxlength="50">
+      <select id="lyTopic" class="ly-topic-select">
+        <option value="general">通用问事</option>
+        <option value="wealth">求财问利</option>
+        <option value="career">事业工作</option>
+        <option value="love">感情姻缘</option>
+        <option value="health">疾病健康</option>
+        <option value="travel">出行平安</option>
+        <option value="exam">考试学业</option>
+        <option value="lost">寻人失物</option>
+        <option value="lawsuit">官非诉讼</option>
+      </select>
+    </div>
+    <div class="liuyao-method-row">
+      <span style="font-size:12px;color:var(--ly-ink3);align-self:center;margin-right:4px">起卦方式</span>
+      <button class="ly-method-btn active" data-method="coin">铜钱法</button>
+      <button class="ly-method-btn" data-method="number">数字法</button>
+      <button class="ly-method-btn" data-method="time">时间起卦</button>
+      <button class="ly-cast-btn" id="lyCastBtn" style="margin-left:auto">起卦</button>
+    </div>
+    <div id="lyCoinArea" class="ly-coin-area" style="display:none">
+      <div style="text-align:center">
+        <div class="ly-coin yang" id="lyCoin1">背</div>
+        <div class="ly-coin-label">铜钱一</div>
+      </div>
+      <div style="text-align:center">
+        <div class="ly-coin yang" id="lyCoin2">背</div>
+        <div class="ly-coin-label">铜钱二</div>
+      </div>
+      <div style="text-align:center">
+        <div class="ly-coin yang" id="lyCoin3">背</div>
+        <div class="ly-coin-label">铜钱三</div>
+      </div>
+    </div>
+    <div id="lyNumberArea" style="display:none">
+      <div style="font-size:12px;color:var(--ly-ink3);margin-bottom:8px">输入三个数字（1-9），系统自动起卦</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <input type="number" id="lyNum1" class="liuyao-input-field" min="1" max="9" style="width:60px;text-align:center" placeholder="1">
+        <input type="number" id="lyNum2" class="liuyao-input-field" min="1" max="9" style="width:60px;text-align:center" placeholder="2">
+        <input type="number" id="lyNum3" class="liuyao-input-field" min="1" max="9" style="width:60px;text-align:center" placeholder="3">
+      </div>
+    </div>
+    <div id="lyTossProgress" class="ly-toss-progress" style="display:none"></div>
+  </div>
+  <div id="lyResultArea">
+    <div class="ly-empty">心诚则灵 · 默念所问之事，选择起卦方式后点击「起卦」</div>
+  </div>
 </div>
 
 <!-- Input Card -->
@@ -461,6 +843,15 @@ body::after{
   </div>
 </div>
 
+<!-- 八字四柱 -->
+<div class="card" id="baziCard" style="display:none">
+  <div class="card-header">
+    <span class="card-title">八字四柱 · 子平命理</span>
+    <span class="card-badge" id="baziBadge"></span>
+  </div>
+  <div id="baziContent"></div>
+</div>
+
 <!-- Radar Chart -->
 <div class="card" id="radarCard" style="display:none">
   <div class="card-header">
@@ -468,6 +859,33 @@ body::after{
     <span class="card-badge">事业 · 财运 · 感情</span>
   </div>
   <div id="radarContent"></div>
+</div>
+
+<!-- 命运关键词词云 (V3.1) -->
+<div class="card" id="keywordCard" style="display:none">
+  <div class="card-header">
+    <span class="card-title">命运关键词</span>
+    <span class="card-badge">一图读懂你的命格</span>
+  </div>
+  <div id="keywordContent"></div>
+</div>
+
+<!-- 格局分析 (V3.1) -->
+<div class="card" id="gejuCard" style="display:none">
+  <div class="card-header">
+    <span class="card-title">紫微格局分析</span>
+    <span class="card-badge" id="gejuBadge"></span>
+  </div>
+  <div id="gejuContent"></div>
+</div>
+
+<!-- 紫微大运时间线 (V3.1) -->
+<div class="card" id="timelineCard" style="display:none">
+  <div class="card-header">
+    <span class="card-title">大运时间线</span>
+    <span class="card-badge">十年一柱 · 顺逆可见</span>
+  </div>
+  <div id="timelineContent"></div>
 </div>
 
 <!-- AI Interpretation -->
@@ -488,9 +906,9 @@ body::after{
 
 <!-- Footer -->
 <div class="footer">
-  <span class="footer-text">排盘引擎：iztro (MIT) · AI 解读：DeepSeek · 仅供娱乐</span>
+  <span class="footer-text">排盘引擎：iztro + lunar-javascript · AI 解读：DeepSeek · 仅供娱乐</span>
   <span class="footer-text">
-    <a href="https://github.com/Renhuai123/ziwei-doushu" target="_blank" class="footer-link">数据源：紫微斗数开源项目</a>
+    <a href="https://github.com/SilenceHVK/lunar-javascript" target="_blank" class="footer-link">八字黄历数据：lunar-javascript</a>
   </span>
 </div>
 
@@ -504,9 +922,16 @@ body::after{
 <!-- iztro CDN (锁定 2.4.4 版本，避免上游更新破坏 API) -->
 <script src="https://cdn.jsdelivr.net/npm/iztro@2.4.4/dist/iztro.min.js"></script>
 
+<!-- lunar-javascript CDN (锁定版本，提供八字排盘 + 黄历宜忌 + 农历转换) -->
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+
 <script>
 /* =================================================================
-   命运预测 V2.2 — Main Logic
+   命运预测 V3.3 — Main Logic
+   V3.0 新增：八字四柱 · 真实黄历 · 大运排盘
+   V3.1 新增：格局分析 · 紫微大运时间线 · 命运关键词词云
+   V3.2 新增：六爻起卦 · 纳甲排盘 · 六亲六神世应用神
+   V3.3 新增：旬空月建月破 · 日冲合暗动 · 进神退神 · 六层评分
    ================================================================= */
 
 // ===== STAR DICTIONARY =====
@@ -657,7 +1082,7 @@ function init() {
   populateHourSelect();
   populateMinuteSelect();
   populateProvinceSelect();
-  updateFortuneSlip();
+  renderAlmanac();
 
   document.getElementById('btnGenerate').addEventListener('click', generateChart);
   document.getElementById('btnSaveKey').addEventListener('click', saveApiKey);
@@ -729,35 +1154,47 @@ function init() {
   });
 }
 
-// ===== FORTUNE SLIP =====
-function updateFortuneSlip() {
-  const today = new Date().toISOString().split('T')[0];
-  if (lastFortuneDate === today && lastFortuneNote) {
-    document.getElementById('fortuneSlug').textContent = lastFortuneNote;
-    document.getElementById('fortuneSub').textContent = lastFortuneSub || '今日已签 · 明日再来';
-    document.getElementById('fortuneHint').style.display = '';
-    document.getElementById('fortuneSlip').style.cursor = 'default';
-    document.getElementById('fortuneSlip').style.opacity = '0.6';
-  } else {
-    document.getElementById('fortuneHint').style.display = 'none';
-    document.getElementById('fortuneSlip').style.cursor = 'pointer';
-    document.getElementById('fortuneSlip').style.opacity = '1';
+// ===== 今日黄历 (V3.0 用 lunar-javascript 替换随机运势签) =====
+function renderAlmanac(){
+  const loading=document.getElementById('almanacLoading');
+  const content=document.getElementById('almanacContent');
+  if(typeof Solar==='undefined'||typeof Lunar==='undefined'){
+    loading.textContent='黄历引擎加载失败，请检查网络连接';
+    loading.style.color='var(--danger)';
+    return;
   }
-}
-
-function drawFortuneSlip() {
-  const today = new Date().toISOString().split('T')[0];
-  if (lastFortuneDate === today) return;
-  const slip = fortuneSlips[Math.floor(Math.random() * fortuneSlips.length)];
-  document.getElementById('fortuneSlug').textContent = slip.slug;
-  document.getElementById('fortuneSub').textContent = slip.sub;
-  localStorage.setItem('fortune_date', today);
-  localStorage.setItem('fortune_note', slip.slug);
-  localStorage.setItem('fortune_sub', slip.sub);
-  lastFortuneDate = today;
-  lastFortuneNote = slip.slug;
-  lastFortuneSub = slip.sub;
-  updateFortuneSlip();
+  try{
+    const now=new Date();
+    const solar=Solar.fromDate(now);
+    const lunar=solar.getLunar();
+    // 日期信息
+    const monthStr=solar.getMonth()+'月'+solar.getDay()+'日';
+    const weekDay=['周日','周一','周二','周三','周四','周五','周六'][solar.getWeek()];
+    const lunarStr=lunar.getMonthInChinese()+'月'+lunar.getDayInChinese();
+    document.getElementById('almanacDateMain').textContent=solar.getYear()+'年'+monthStr+' '+weekDay;
+    document.getElementById('almanacDateSub').textContent='农历'+lunarStr+' · '+lunar.getYearShengXiao()+'年';
+    // 日柱干支
+    document.getElementById('almanacGanzhi').textContent=lunar.getDayInGanZhi();
+    // 宜忌
+    const yiList=lunar.getDayYi();
+    const jiList=lunar.getDayJi();
+    document.getElementById('almanacYi').textContent=yiList.length>0?yiList.join(' · '):'无';
+    document.getElementById('almanacJi').textContent=jiList.length>0?jiList.join(' · '):'无';
+    // 底部标签
+    let footerHTML='';
+    footerHTML+='<div class="almanac-tag"><span class="almanac-tag-label">建除</span><span class="almanac-tag-value">'+escapeHtml(lunar.getZhiXing())+'</span></div>';
+    footerHTML+='<div class="almanac-tag"><span class="almanac-tag-label">冲</span><span class="almanac-tag-value">'+escapeHtml(lunar.getChongDesc())+'</span></div>';
+    footerHTML+='<div class="almanac-tag"><span class="almanac-tag-label">煞方</span><span class="almanac-tag-value">'+escapeHtml(lunar.getSha())+'</span></div>';
+    footerHTML+='<div class="almanac-tag"><span class="almanac-tag-label">财神</span><span class="almanac-tag-value">'+escapeHtml(lunar.getDayPositionCaiDesc())+'</span></div>';
+    footerHTML+='<div class="almanac-tag"><span class="almanac-tag-label">喜神</span><span class="almanac-tag-value">'+escapeHtml(lunar.getDayPositionXiDesc())+'</span></div>';
+    footerHTML+='<div class="almanac-tag"><span class="almanac-tag-label">福神</span><span class="almanac-tag-value">'+escapeHtml(lunar.getDayPositionFuDesc())+'</span></div>';
+    document.getElementById('almanacFooter').innerHTML=footerHTML;
+    loading.style.display='none';
+    content.style.display='';
+  }catch(e){
+    loading.textContent='黄历读取失败：'+escapeHtml(e.message);
+    loading.style.color='var(--danger)';
+  }
 }
 
 // ===== POPULATE SELECTORS =====
@@ -848,6 +1285,10 @@ function generateChart(){
   currentChartData=data;
   renderChart(data,userName);
   renderRadar(data);
+  renderBazi();
+  renderGeju(data);
+  renderTimeline(data);
+  renderKeywords(data);
   const topic=document.getElementById('aiTopic').value;
   currentHoroscope=null;
   if(topic==='horoscope'&&typeof data.horoscope==='function'){
@@ -982,6 +1423,666 @@ function renderRadar(data){
   document.getElementById('radarContent').innerHTML='<div class="radar-container">'+svg+bars+'</div>';
 }
 
+// ===== BAZI 八字排盘 (V3.0 新增，基于 lunar-javascript) =====
+const WX_MAP={'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水',
+  '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'};
+const WX_COLORS={金:'wx-metal',木:'wx-wood',水:'wx-water',火:'wx-fire',土:'wx-earth'};
+
+function getBaziDate(){
+  const y=parseInt(document.getElementById('birthYear').value);
+  const m=parseInt(document.getElementById('birthMonth').value);
+  const d=parseInt(document.getElementById('birthDay').value);
+  if(!y||!m||!d)return null;
+  let h=12,min=0;
+  if(!document.getElementById('unknownTime').checked){
+    const ts=getTrueSolarTime();
+    if(ts){h=ts.hour;min=ts.minute}
+    else{const hi=parseInt(document.getElementById('birthHour').value);const mi=parseInt(document.getElementById('birthMinute').value);if(!isNaN(hi)){h=hi;min=isNaN(mi)?0:mi}}
+  }
+  return new Date(y,m-1,d,h,min,0);
+}
+
+function generateBazi(){
+  const date=getBaziDate();
+  if(!date)return null;
+  const gender=getGender()==='男'?1:0;
+  if(typeof Solar==='undefined')return null;
+  try{
+    const solar=Solar.fromDate(date);
+    const lunar=solar.getLunar();
+    const ec=lunar.getEightChar();
+    const yun=ec.getYun(gender);
+    const rawDaYun=yun.getDaYun();
+    // 四柱
+    const pillars=[
+      {label:'年柱',ganZhi:ec.getYear(),shiShen:ec.getYearShiShenGan(),naYin:ec.getYearNaYin()},
+      {label:'月柱',ganZhi:ec.getMonth(),shiShen:ec.getMonthShiShenGan(),naYin:ec.getMonthNaYin()},
+      {label:'日柱',ganZhi:ec.getDay(),shiShen:ec.getDayShiShenGan(),naYin:ec.getDayNaYin(),isDay:true},
+      {label:'时柱',ganZhi:ec.getTime(),shiShen:ec.getTimeShiShenGan(),naYin:ec.getTimeNaYin()}
+    ];
+    // 五行统计（4天干+4地支=8字）
+    const wxCount={金:0,木:0,水:0,火:0,土:0};
+    pillars.forEach(p=>{
+      const gz=p.ganZhi;
+      if(gz&&gz.length>=2){
+        const gan=gz[0],zhi=gz[1];
+        if(WX_MAP[gan])wxCount[WX_MAP[gan]]++;
+        if(WX_MAP[zhi])wxCount[WX_MAP[zhi]]++;
+      }
+    });
+    // 大运（过滤掉空干支的项）
+    const daYun=rawDaYun.filter(dy=>dy.getGanZhi()&&dy.getGanZhi().length>=2).slice(0,8).map(dy=>({
+      ganZhi:dy.getGanZhi(),
+      startYear:dy.getStartYear(),
+      endYear:dy.getEndYear(),
+      startAge:dy.getStartAge(),
+      endAge:dy.getEndAge()
+    }));
+    const dayGz=ec.getDay();
+    return{
+      pillars,wxCount,daYun,
+      yunStartYear:yun.getStartYear(),
+      yunStartMonth:yun.getStartMonth(),
+      yunStartDay:yun.getStartDay(),
+      dayGan:dayGz?dayGz[0]:'',
+      dayGanElement:dayGz&&WX_MAP[dayGz[0]]?WX_MAP[dayGz[0]]:'未知'
+    };
+  }catch(e){console.error('八字排盘错误:',e);return null}
+}
+
+function renderBazi(){
+  const baziCard=document.getElementById('baziCard');
+  const baziContent=document.getElementById('baziContent');
+  const baziBadge=document.getElementById('baziBadge');
+  const data=generateBazi();
+  if(!data){baziCard.style.display='none';return}
+  baziCard.style.display='';
+  baziBadge.textContent=getUserName()+' · '+getSolarDate();
+  // 四柱表
+  let html='<div class="bazi-grid">';
+  data.pillars.forEach(p=>{
+    html+='<div class="bazi-pillar'+(p.isDay?' day-pillar':'')+'">'+
+      '<div class="bazi-pillar-label">'+p.label+'</div>'+
+      '<div class="bazi-pillar-ganzhi">'+escapeHtml(p.ganZhi)+'</div>'+
+      '<div class="bazi-pillar-shishen">'+escapeHtml(p.shiShen)+'</div>'+
+      '<div class="bazi-pillar-nayin">'+escapeHtml(p.naYin)+'</div>'+
+      '</div>';
+  });
+  html+='</div>';
+  // 五行统计
+  const total=data.wxCount.金+data.wxCount.木+data.wxCount.水+data.wxCount.火+data.wxCount.土;
+  const maxWx=Math.max(...Object.values(data.wxCount));
+  html+='<div class="wuxing-stats">';
+  ['金','木','水','火','土'].forEach(wx=>{
+    const cnt=data.wxCount[wx];
+    const pct=total>0?Math.round(cnt/total*100):0;
+    const isLacking=cnt===0;
+    const isDominant=cnt===maxWx&&maxWx>0;
+    html+='<div class="wuxing-item'+(isLacking?' lacking':'')+(isDominant?' dominant':'')+'">'+
+      '<div class="wuxing-name">'+wx+'</div>'+
+      '<div class="wuxing-bar-bg"><div class="wuxing-bar-fill '+WX_COLORS[wx]+'" style="width:'+pct+'%"></div></div>'+
+      '<div class="wuxing-count">'+cnt+'</div>'+
+      '</div>';
+  });
+  html+='</div>';
+  // 五行总结
+  const lacking=Object.entries(data.wxCount).filter(([k,v])=>v===0).map(([k])=>k);
+  const dominant=Object.entries(data.wxCount).filter(([k,v])=>v===maxWx&&maxWx>0).map(([k])=>k);
+  let summary='日主为 <strong>'+escapeHtml(data.dayGan)+'</strong>（'+escapeHtml(data.dayGanElement)+'），五行 ';
+  const parts=[];
+  Object.entries(data.wxCount).forEach(([k,v])=>{parts.push(k+v)});
+  summary+=parts.join(' · ')+'。';
+  if(lacking.length>0)summary+='缺 <strong>'+lacking.join('、')+'</strong>，宜补。';
+  if(dominant.length>0&&maxWx>2)summary+='<strong>'+dominant.join('、')+'</strong>偏旺，宜疏。';
+  if(lacking.length===0&&maxWx<=2)summary+='五行齐备且相对均衡。';
+  html+='<div class="wuxing-summary">'+summary+'</div>';
+  // 大运排盘
+  const currentYear=new Date().getFullYear();
+  html+='<div class="dayun-section">';
+  html+='<div class="dayun-title">大运 · 十年一柱 <span class="dayun-start-age">'+data.yunStartYear+'年起运'+(data.yunStartMonth>0?' · '+data.yunStartMonth+'月'+data.yunStartDay+'日':'')+'</span></div>';
+  html+='<div class="dayun-table">';
+  data.daYun.forEach(dy=>{
+    const isCurrent=currentYear>=dy.startYear&&currentYear<=dy.endYear;
+    html+='<div class="dayun-cell'+(isCurrent?' current':'')+'">'+
+      '<div class="dayun-age">'+dy.startAge+'-'+dy.endAge+'岁</div>'+
+      '<div class="dayun-ganzhi">'+escapeHtml(dy.ganZhi)+'</div>'+
+      '<div class="dayun-year">'+dy.startYear+'-'+dy.endYear+'</div>'+
+      (isCurrent?'<div class="dayun-start" style="color:var(--accent)">▶ 当下</div>':'')+
+      '</div>';
+  });
+  html+='</div></div>';
+  baziContent.innerHTML=html;
+}
+
+// ===== 紫微格局分析 (V3.1 新增) =====
+// 地支三合局
+const SANHE={'申':['申','子','辰'],'子':['申','子','辰'],'辰':['申','子','辰'],'寅':['寅','午','戌'],'午':['寅','午','戌'],'戌':['寅','午','戌'],'巳':['巳','酉','丑'],'酉':['巳','酉','丑'],'丑':['巳','酉','丑'],'亥':['亥','卯','未'],'卯':['亥','卯','未'],'未':['亥','卯','未']};
+// 六冲（对宫）
+const CHONG={'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'};
+
+function getPalaceByName(palaces,name){
+  // 兼容"仆役"/"交友"
+  if(name==='交友'||name==='仆役')return palaces.find(p=>p.name==='交友'||p.name==='仆役');
+  return palaces.find(p=>p.name===name);
+}
+function getMajorStarNames(palace){
+  if(!palace)return[];
+  return(palace.majorStars||[]).map(s=>s.name);
+}
+function getAllStarNames(palace){
+  if(!palace)return[];
+  let stars=[];
+  ['majorStars','minorStars','adjectiveStars'].forEach(k=>{(palace[k]||[]).forEach(s=>stars.push(s.name))});
+  return stars;
+}
+function getSanFangSiZheng(palaces,centerPalace){
+  // 返回三方四正的宫位数组（含本宫）
+  if(!centerPalace)return[];
+  const branch=centerPalace.earthlyBranch;
+  const sanheBranches=SANHE[branch]||[];
+  const chongBranch=CHONG[branch];
+  const result=[];
+  palaces.forEach(p=>{
+    if(sanheBranches.includes(p.earthlyBranch)||p.earthlyBranch===chongBranch||p.earthlyBranch===branch){
+      result.push(p);
+    }
+  });
+  return result;
+}
+function starsInPalaces(palaces,starNames){
+  // 检查这些宫位中是否有指定星曜（任一）
+  if(!palaces||!starNames)return false;
+  for(const p of palaces){
+    const all=getAllStarNames(p);
+    for(const sn of starNames){if(all.includes(sn))return true}
+  }
+  return false;
+}
+function getMutagenStars(palaces,mutagenType){
+  // 在指定宫位集合中，找出有指定四化(禄/权/科/忌)的主星
+  const result=[];
+  palaces.forEach(p=>{
+    (p.majorStars||[]).forEach(s=>{if(s.mutagen===mutagenType)result.push(s.name)});
+  });
+  return result;
+}
+
+// 格局规则库（精选24个）
+const GEJU_RULES=[
+  // === 上等格局 ===
+  {name:'紫府同宫格',tier:'high',score:9,
+   desc:'紫微天府同坐命宫于寅申宫，帝星遇库星。',
+   detail:'此格主人有领导才能，气度宽宏，主权势富贵。一生多贵人助力，事业有大成之象。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('紫微')&&ms.includes('天府');
+   }},
+  {name:'紫府朝垣格',tier:'high',score:8,
+   desc:'紫微天府在三方四正拱照命宫。',
+   detail:'帝星与库星遥相拱照，主人有威仪，事业格局大，宜管理层或自创事业。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     if(ms.includes('紫微')&&ms.includes('天府'))return false;
+     const sf=getSanFangSiZheng(ps,m);
+     return starsInPalaces(sf,['紫微'])&&starsInPalaces(sf,['天府']);
+   }},
+  {name:'府相朝垣格',tier:'high',score:8,
+   desc:'天府天相分列命宫三方与对宫三方，朝拱命宫。',
+   detail:'府相朝垣，主人稳重有谋，财官双美。适合管理、金融、行政领域。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const sf=getSanFangSiZheng(ps,m);
+     return starsInPalaces(sf,['天府'])&&starsInPalaces(sf,['天相']);
+   }},
+  {name:'机月同梁格',tier:'mid',score:7,
+   desc:'命宫天机/太阴/天同/天梁，三方四正四星会齐。',
+   detail:'机月同梁作吏人，适合公教、文职、企管。性格沉稳有谋，但缺开创魄力。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const sf=getSanFangSiZheng(ps,m);
+     const allStars=sf.flatMap(p=>getMajorStarNames(p));
+     return['天机','太阴','天同','天梁'].every(s=>allStars.includes(s));
+   }},
+  {name:'杀破狼格',tier:'mid',score:6,
+   desc:'命宫七杀/破军/贪狼，三方四正会齐三星。',
+   detail:'杀破狼为变动格局，人生起伏大，敢冲敢拼。适合创业、军警、技术领域。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     const sf=getSanFangSiZheng(ps,m);const allStars=sf.flatMap(p=>getMajorStarNames(p));
+     const hasOne=ms.some(s=>['七杀','破军','贪狼'].includes(s));
+     return hasOne&&['七杀','破军','贪狼'].every(s=>allStars.includes(s));
+   }},
+  {name:'火贪格',tier:'high',score:8,
+   desc:'贪狼与火星同宫坐命，横发之格。',
+   detail:'火贪格主横发突财，一生中至少一次大爆发机遇。宜经商投资，但需把握时机。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const all=getAllStarNames(m);
+     return all.includes('贪狼')&&all.includes('火星');
+   }},
+  {name:'铃贪格',tier:'high',score:7,
+   desc:'贪狼与铃星同宫坐命，亦为横发格。',
+   detail:'铃贪同宫，主暗中来财，爆发力稍逊火贪但更持久。宜投资、创意行业。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const all=getAllStarNames(m);
+     return all.includes('贪狼')&&all.includes('铃星');
+   }},
+  {name:'日月并明格',tier:'high',score:8,
+   desc:'太阳太阴庙旺会照命宫三方四正。',
+   detail:'日月并明，名声显达，贵人运强。男主名望，女主富贵。一生声名远播。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const sf=getSanFangSiZheng(ps,m);
+     return starsInPalaces(sf,['太阳'])&&starsInPalaces(sf,['太阴']);
+   }},
+  {name:'日月同宫格',tier:'mid',score:6,
+   desc:'太阳太阴同坐命宫于丑未宫。',
+   detail:'日月同宫，性情阴阳调和，但易犹豫。适合幕僚、顾问、协调类工作。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('太阳')&&ms.includes('太阴');
+   }},
+  {name:'三奇嘉会格',tier:'high',score:10,
+   desc:'化禄、化权、化科三化齐聚命宫三方四正。',
+   detail:'三奇嘉会为紫微第一贵格，主权贵富贵双全。一生名利双收，大器之命。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const sf=getSanFangSiZheng(ps,m);
+     const lu=getMutagenStars(sf,'禄').length>0;
+     const quan=getMutagenStars(sf,'权').length>0;
+     const ke=getMutagenStars(sf,'科').length>0;
+     return lu&&quan&&ke;
+   }},
+  {name:'双禄交流格',tier:'high',score:8,
+   desc:'命宫三方四正有两个化禄。',
+   detail:'双禄交流主财源广进，一生不缺钱。但需防贪多嚼不烂，宜专注经营。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const sf=getSanFangSiZheng(ps,m);
+     return getMutagenStars(sf,'禄').length>=2;
+   }},
+  {name:'文桂文华格',tier:'mid',score:7,
+   desc:'文昌文曲同宫于命宫。',
+   detail:'昌曲同宫，文采斐然，才华横溢。宜学术、文艺、传媒。女主容貌佳。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const all=getAllStarNames(m);
+     return all.includes('文昌')&&all.includes('文曲');
+   }},
+  {name:'左右同宫格',tier:'mid',score:7,
+   desc:'左辅右弼同宫于命宫。',
+   detail:'左右同宫，贵人多助，一生逢凶化吉。为人宽厚，人缘极佳。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const all=getAllStarNames(m);
+     return all.includes('左辅')&&all.includes('右弼');
+   }},
+  {name:'坐贵向贵格',tier:'mid',score:7,
+   desc:'命宫有天魁，对宫有天钺（或反之）。',
+   detail:'魁钺相对，贵人暗助。一生多逢贵人提携，逢凶化吉。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const all=getAllStarNames(m);
+     const op=getPalaceByName(ps,'迁移');const opAll=getAllStarNames(op);
+     return(all.includes('天魁')&&opAll.includes('天钺'))||(all.includes('天钺')&&opAll.includes('天魁'));
+   }},
+  {name:'紫相格',tier:'mid',score:6,
+   desc:'紫微天相同坐命宫。',
+   detail:'紫相坐命，有领导欲但行事谨慎。适合行政、管理。注意感情波折。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('紫微')&&ms.includes('天相');
+   }},
+  {name:'武贪格',tier:'mid',score:6,
+   desc:'武曲贪狼同坐命宫于丑未宫。',
+   detail:'武贪同宫，晚发之格。少年辛苦，中年后大发。宜金融、商业。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('武曲')&&ms.includes('贪狼');
+   }},
+  {name:'武杀格',tier:'mid',score:5,
+   desc:'武曲七杀同坐命宫。',
+   detail:'武杀同宫，刚毅果断，宜军警、技术。个性强，注意人际摩擦。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('武曲')&&ms.includes('七杀');
+   }},
+  {name:'廉杀格',tier:'mid',score:5,
+   desc:'廉贞七杀同坐命宫。',
+   detail:'廉杀同宫，有冲劲有谋略，宜创业。注意情绪管理与感情波折。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('廉贞')&&ms.includes('七杀');
+   }},
+  {name:'机巨格',tier:'mid',score:5,
+   desc:'天机巨门同坐命宫于卯酉宫。',
+   detail:'机巨同宫，聪慧善辩，宜口才相关行业。注意多疑与口舌是非。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('天机')&&ms.includes('巨门');
+   }},
+  {name:'石中隐玉格',tier:'mid',score:6,
+   desc:'巨门在子午宫坐命，三方四正吉星拱照。',
+   detail:'石中隐玉，大器晚成。早年困顿，中年后方显才华。宜学术、专业领域。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const ms=getMajorStarNames(m);
+     return ms.includes('巨门')&&(m.earthlyBranch==='子'||m.earthlyBranch==='午');
+   }},
+  {name:'阳梁昌禄格',tier:'high',score:8,
+   desc:'太阳、天梁、文昌、禄存会照命宫三方四正。',
+   detail:'阳梁昌禄，科举成名之格。宜学术、考试、公职。利读书升学。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');const sf=getSanFangSiZheng(ps,m);
+     const allStars=sf.flatMap(p=>getAllStarNames(p));
+     return allStars.includes('太阳')&&allStars.includes('天梁')&&allStars.includes('文昌')&&allStars.includes('禄存');
+   }},
+  {name:'辅弼夹命格',tier:'mid',score:7,
+   desc:'左辅右弼分列命宫前后两宫，夹辅命宫。',
+   detail:'辅弼夹命，贵人环绕，一生得力多人相助。为人随和，人际关系佳。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');
+     if(!m)return false;
+     const branch=m.earthlyBranch;
+     const branches=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+     const idx=branches.indexOf(branch);
+     const prevB=branches[(idx-1+12)%12];
+     const nextB=branches[(idx+1)%12];
+     const prevP=ps.find(p=>p.earthlyBranch===prevB);
+     const nextP=ps.find(p=>p.earthlyBranch===nextB);
+     return getAllStarNames(prevP).includes('左辅')&&getAllStarNames(nextP).includes('右弼')||getAllStarNames(prevP).includes('右弼')&&getAllStarNames(nextP).includes('左辅');
+   }},
+  // === 凶格 ===
+  {name:'羊陀夹忌格',tier:'bad',score:3,
+   desc:'擎羊陀罗夹命宫，且命宫或三方有化忌。',
+   detail:'羊陀夹忌，进退两难。一生多波折阻碍，宜稳扎稳打，忌冒进。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');if(!m)return false;
+     const branch=m.earthlyBranch;
+     const branches=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+     const idx=branches.indexOf(branch);
+     const prevB=branches[(idx-1+12)%12];
+     const nextB=branches[(idx+1)%12];
+     const prevP=ps.find(p=>p.earthlyBranch===prevB);
+     const nextP=ps.find(p=>p.earthlyBranch===nextB);
+     const hasYang=getAllStarNames(prevP).includes('擎羊')||getAllStarNames(nextP).includes('擎羊');
+     const hasTuo=getAllStarNames(prevP).includes('陀罗')||getAllStarNames(nextP).includes('陀罗');
+     const sf=getSanFangSiZheng(ps,m);
+     const hasJi=getMutagenStars(sf,'忌').length>0;
+     return hasYang&&hasTuo&&hasJi;
+   }},
+  {name:'马头带剑格',tier:'bad',score:4,
+   desc:'擎羊入命于午宫。',
+   detail:'马头带剑，性刚易折。有冲劲但易伤人伤己，宜军警、技术，忌商。',
+   check:(ps)=>{
+     const m=getPalaceByName(ps,'命宫');
+     return m&&m.earthlyBranch==='午'&&getAllStarNames(m).includes('擎羊');
+   }}
+];
+
+function renderGeju(data){
+  const card=document.getElementById('gejuCard');
+  const content=document.getElementById('gejuContent');
+  const badge=document.getElementById('gejuBadge');
+  const matched=GEJU_RULES.filter(r=>{try{return r.check(data.palaces)}catch(e){return false}});
+  if(matched.length===0){
+    card.style.display='';
+    badge.textContent='未入特殊格局';
+    content.innerHTML='<div class="geju-empty">此命盘未入传统特殊格局，属平常命格。平常命不代表不好——多数人的命格都是平常格，脚踏实地亦可成就一番事业。</div>';
+    return;
+  }
+  card.style.display='';
+  const highCount=matched.filter(g=>g.tier==='high').length;
+  const badCount=matched.filter(g=>g.tier==='bad').length;
+  let badgeText='';
+  if(highCount>0)badgeText=highCount+'个贵格';
+  else if(badCount===matched.length)badgeText='煞格为主';
+  else badgeText=matched.length+'个格局';
+  badge.textContent=badgeText;
+  // 按分数排序
+  matched.sort((a,b)=>b.score-a.score);
+  let html='<div class="geju-list">';
+  matched.forEach(g=>{
+    const tierTag=g.tier==='high'?'上格':g.tier==='mid'?'中格':g.tier==='flat'?'平格':'凶格';
+    html+='<div class="geju-item tier-'+g.tier+'">'+
+      '<div class="geju-score">'+g.score+'</div>'+
+      '<div class="geju-body">'+
+        '<div class="geju-name">'+escapeHtml(g.name)+'<span class="geju-tier-tag">'+tierTag+'</span></div>'+
+        '<div class="geju-desc">'+escapeHtml(g.desc)+'</div>'+
+        '<div class="geju-detail">'+escapeHtml(g.detail)+'</div>'+
+      '</div>'+
+    '</div>';
+  });
+  html+='</div>';
+  content.innerHTML=html;
+}
+
+// ===== 紫微大运时间线 (V3.1 新增) =====
+function renderTimeline(data){
+  const card=document.getElementById('timelineCard');
+  const content=document.getElementById('timelineContent');
+  try{
+    // 获取大限数据：遍历12宫的大限
+    const h=data.horoscope(new Date());
+    if(!h||!h.decadal){card.style.display='none';return}
+    // iztro 大限是按宫走的，每宫10年。我们需要获取所有大限。
+    // 通过 age 计算：大限从命宫起，按五行局定起运岁数
+    const fiveElementsClass=data.fiveElementsClass;
+    const startAgeMap={'水二局':2,'木三局':3,'金四局':4,'土五局':5,'火六局':6};
+    const startAge=startAgeMap[fiveElementsClass]||5;
+    // 命宫地支为起点，按顺时针（阳男阴女）或逆时针（阴男阳女）走
+    const gender=getGender();
+    // iztro 已处理阴阳男女方向，我们直接从 horoscope 拿
+    // 用 data 的 chineseAge 或推算
+    // 简化方案：生成12个大限，每个10年
+    const branches=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+    // 命宫地支
+    const soulBranch=data.earthlyBranchOfSoulPalace;
+    const startIdx=branches.indexOf(soulBranch);
+    // 方向：阳男阴女顺行，阴男阳女逆行
+    // iztro 的 gender: '男'或'女'，年干阴阳
+    const yearGan=data.lunarYear?data.lunarYear.substring(0,1):'';
+    // 简化：直接用 horoscope 的 decadal.index 推算方向
+    const currentDecadal=h.decadal;
+    const currentDecadalIdx=currentDecadal.index;
+    // 生成12个大限
+    const dayuns=[];
+    // 找方向：用当前大限 index 反推
+    // iztro 的 index 0-11 对应12宫，0=命宫起始
+    // 顺行：index增加，逆行：index减少
+    // 判断方向：比较命宫idx和当前大限地支idx
+    const decadalBranch=currentDecadal.earthlyBranch;
+    const decadalBranchIdx=branches.indexOf(decadalBranch);
+    let direction=1; // 1=顺，-1=逆
+    // 推算：从命宫startIdx走currentDecadalIdx步，看是否到达decadalBranchIdx
+    const forwardIdx=(startIdx+currentDecadalIdx)%12;
+    const backwardIdx=(startIdx-currentDecadalIdx+12)%12;
+    if(branches[forwardIdx]===decadalBranch)direction=1;
+    else if(branches[backwardIdx]===decadalBranch)direction=-1;
+    for(let i=0;i<12;i++){
+      const branchIdx=((startIdx+direction*i)%12+12)%12;
+      const branch=branches[branchIdx];
+      const palace=data.palaces.find(p=>p.earthlyBranch===branch);
+      const ageStart=startAge+i*10;
+      const ageEnd=ageStart+9;
+      const yearStart=new Date().getFullYear()-parseInt(data.solarDate.split('-')[0])?0:0;
+      // 从出生年份推算
+      const birthYear=parseInt(data.solarDate.split('-')[0]);
+      const yearStartCalc=birthYear+ageStart;
+      const yearEndCalc=birthYear+ageEnd;
+      dayuns.push({
+        branch,ageStart,ageEnd,yearStart:yearStartCalc,yearEnd:yearEndCalc,
+        palaceName:palace?palace.name:'',
+        heavenlyStem:palace?palace.heavenlyStem:'',
+        majorStars:palace?getMajorStarNames(palace):[],
+        ganZhi:(palace?palace.heavenlyStem:'')+branch,
+        isCurrent:i===currentDecadalIdx
+      });
+    }
+    // 渲染 SVG 时间线
+    const currentAge=new Date().getFullYear()-parseInt(data.solarDate.split('-')[0]);
+    const cellWidth=90;
+    const totalWidth=cellWidth*12+40;
+    let svg='<div class="timeline-wrap"><div class="timeline-svg"><svg viewBox="0 0 '+totalWidth+' 180" style="min-width:'+totalWidth+'px" width="100%">';
+    // 基线
+    svg+='<line x1="20" y1="80" x2="'+(totalWidth-20)+'" y2="80" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>';
+    // 当前位置标记
+    if(currentAge>=0){
+      const currentX=20+Math.min(Math.max(currentAge,0),120)/10*cellWidth;
+      svg+='<line x1="'+currentX+'" y1="20" x2="'+currentX+'" y2="140" stroke="rgba(212,175,55,0.4)" stroke-width="1" stroke-dasharray="3,3"/>';
+      svg+='<text x="'+currentX+'" y="16" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="500">当下 '+currentAge+'岁</text>';
+    }
+    dayuns.forEach((dy,i)=>{
+      const x=20+i*cellWidth;
+      const w=cellWidth-6;
+      // 颜色：当前=金，吉星多=金偏亮，煞星=红，普通=灰
+      let barColor='rgba(255,255,255,0.08)';
+      let textColor='var(--text3)';
+      if(dy.isCurrent){barColor='rgba(212,175,55,0.25)';textColor='var(--accent)'}
+      else{
+        const hasJi=dy.majorStars.some(s=>['七杀','破军','贪狼','擎羊','陀罗','火星','铃星','地空','地劫'].includes(s));
+        const hasJi2=dy.majorStars.some(s=>['紫微','天府','太阳','太阴','天相','天梁'].includes(s));
+        if(hasJi2){barColor='rgba(212,175,55,0.1)';textColor='var(--text2)'}
+        else if(hasJi){barColor='rgba(196,74,60,0.1)';textColor='#d96a5c'}
+      }
+      svg+='<rect x="'+x+'" y="55" width="'+w+'" height="50" rx="4" fill="'+barColor+'" stroke="'+(dy.isCurrent?'var(--accent)':'rgba(255,255,255,0.05)')+'" stroke-width="1"/>';
+      // 年龄
+      svg+='<text x="'+(x+w/2)+'" y="48" text-anchor="middle" fill="'+textColor+'" font-size="10">'+dy.ageStart+'-'+dy.ageEnd+'岁</text>';
+      // 干支
+      svg+='<text x="'+(x+w/2)+'" y="76" text-anchor="middle" fill="'+(dy.isCurrent?'#f3d99c':textColor)+'" font-size="14" font-weight="500" font-family="var(--font-display)">'+escapeHtml(dy.ganZhi)+'</text>';
+      // 宫名
+      svg+='<text x="'+(x+w/2)+'" y="94" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9">'+escapeHtml(dy.palaceName)+'</text>';
+      // 年份
+      svg+='<text x="'+(x+w/2)+'" y="125" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="9">'+dy.yearStart+'</text>';
+      // 当前标记
+      if(dy.isCurrent){svg+='<text x="'+(x+w/2)+'" y="140" text-anchor="middle" fill="var(--accent)" font-size="10" font-weight="500">▶</text>'}
+      // 主星（最多2个）
+      if(dy.majorStars.length>0){
+        const starText=dy.majorStars.slice(0,2).join('·');
+        svg+='<text x="'+(x+w/2)+'" y="158" text-anchor="middle" fill="rgba(212,175,55,0.5)" font-size="9">'+escapeHtml(starText)+'</text>';
+      }
+    });
+    svg+='</svg></div>';
+    // 图例
+    svg+='<div class="timeline-legend">'+
+      '<div class="timeline-legend-item"><div class="timeline-legend-dot" style="background:rgba(212,175,55,0.25);border:1px solid var(--accent)"></div>当下大限</div>'+
+      '<div class="timeline-legend-item"><div class="timeline-legend-dot" style="background:rgba(212,175,55,0.1)"></div>吉星主限</div>'+
+      '<div class="timeline-legend-item"><div class="timeline-legend-dot" style="background:rgba(196,74,60,0.1)"></div>煞星主限</div>'+
+      '<div class="timeline-legend-item"><div class="timeline-legend-dot" style="background:rgba(255,255,255,0.08)"></div>平限</div>'+
+      '<div class="timeline-legend-item">起运：<span style="color:var(--accent)">'+startAge+'岁</span> · '+escapeHtml(fiveElementsClass)+'</div>'+
+      '</div></div>';
+    content.innerHTML=svg;
+    card.style.display='';
+  }catch(e){
+    card.style.display='none';
+    console.error('大运时间线渲染错误:',e);
+  }
+}
+
+// ===== 命运关键词词云 (V3.1 新增) =====
+const KEYWORD_MAP={
+  // 主星关键词
+  '紫微':{words:['领导者','权威','帝王之气','主观强'],size:'xl'},
+  '天府':{words:['稳健','保守','财神','库星'],size:'lg'},
+  '太阳':{words:['热情','光明','名望','奉献'],size:'lg'},
+  '太阴':{words:['温柔','细腻','田宅','母性'],size:'lg'},
+  '武曲':{words:['刚毅','财星','执行力','孤独'],size:'lg'},
+  '天同':{words:['福星','乐观','慵懒','童心'],size:'md'},
+  '天机':{words:['聪慧','善思','多变','谋略'],size:'lg'},
+  '廉贞':{words:['桃花','囚星','艺术','纠结'],size:'md'},
+  '贪狼':{words:['桃花','欲望','多才','社交'],size:'lg'},
+  '巨门':{words:['口才','多疑','暗星','辩论'],size:'md'},
+  '天相':{words:['辅佐','稳重','衣食','两面'],size:'md'},
+  '天梁':{words:['荫星','清高','长辈','逢凶化吉'],size:'md'},
+  '七杀':{words:['开创','刚猛','孤克','冲锋'],size:'lg'},
+  '破军':{words:['破旧立新','耗星','叛逆','开创'],size:'lg'},
+  // 辅星关键词
+  '左辅':{words:['贵人','辅佐'],size:'md'},
+  '右弼':{words:['贵人','助力'],size:'md'},
+  '文昌':{words:['文采','学术'],size:'md'},
+  '文曲':{words:['才艺','口才'],size:'md'},
+  '天魁':{words:['贵人','提携'],size:'sm'},
+  '天钺':{words:['暗贵','机遇'],size:'sm'},
+  '禄存':{words:['财源','稳定'],size:'md'},
+  '擎羊':{words:['刑伤','刚烈'],size:'sm',bad:true},
+  '陀罗':{words:['拖延','纠缠'],size:'sm',bad:true},
+  '火星':{words:['急躁','爆发'],size:'sm',bad:true},
+  '铃星':{words:['暗恨','固执'],size:'sm',bad:true},
+  '地空':{words:['空亡','破财'],size:'sm',bad:true},
+  '地劫':{words:['劫财','波折'],size:'sm',bad:true},
+};
+
+function renderKeywords(data){
+  const card=document.getElementById('keywordCard');
+  const content=document.getElementById('keywordContent');
+  try{
+    const ming=getPalaceByName(data.palaces,'命宫');
+    if(!ming){card.style.display='none';return}
+    const allStars=getAllStarNames(ming);
+    const sf=getSanFangSiZheng(data.palaces,ming);
+    const sfStars=sf.flatMap(p=>getAllStarNames(p));
+    // 收集关键词
+    const keywords=new Map(); // word -> {size, bad, count}
+    // 命宫主星关键词（权重最高）
+    getMajorStarNames(ming).forEach(s=>{
+      const kw=KEYWORD_MAP[s];
+      if(kw)kw.words.forEach(w=>keywords.set(w,{size:kw.size,bad:kw.bad||false,count:2}));
+    });
+    // 命宫辅星关键词
+    allStars.forEach(s=>{
+      if(!getMajorStarNames(ming).includes(s)){
+        const kw=KEYWORD_MAP[s];
+        if(kw)kw.words.forEach(w=>{
+          if(!keywords.has(w))keywords.set(w,{size:kw.size,bad:kw.bad||false,count:1});
+        });
+      }
+    });
+    // 三方四正主星关键词（补充）
+    sf.forEach(p=>{
+      getMajorStarNames(p).forEach(s=>{
+        const kw=KEYWORD_MAP[s];
+        if(kw)kw.words.forEach(w=>{
+          if(!keywords.has(w))keywords.set(w,{size:'sm',bad:kw.bad||false,count:1});
+        });
+      });
+    });
+    // 格局关键词
+    const matchedGejus=GEJU_RULES.filter(r=>{try{return r.check(data.palaces)}catch(e){return false}});
+    matchedGejus.forEach(g=>{
+      if(g.tier==='high'){
+        ['大器之命','贵人运旺','富贵双全'].forEach(w=>keywords.set(w,{size:'lg',bad:false,count:1}));
+      }
+      if(g.name==='火贪格'||g.name==='铃贪格'){
+        keywords.set('横发突财',{size:'xl',bad:false,count:1});
+      }
+      if(g.name==='杀破狼格'){
+        keywords.set('人生起伏大',{size:'md',bad:false,count:1});
+      }
+      if(g.tier==='bad'){
+        keywords.set('波折磨炼',{size:'md',bad:true,count:1});
+      }
+    });
+    // 五行局补充
+    const wxClass=data.fiveElementsClass||'';
+    if(wxClass)keywords.set(wxClass,{size:'sm',bad:false,count:1});
+    // 长生十二神
+    const cs12=ming.changsheng12;
+    if(cs12){
+      const csMap={'长生':'生机','沐浴':'桃花','冠带':'朝气','临官':'进取','帝旺':'极盛','衰':'退气','病':'调整','死':'沉寂','墓':'收藏','绝':'重生','胎':'孕育','养':'蓄力'};
+      if(csMap[cs12])keywords.set(csMap[cs12],{size:'sm',bad:false,count:1});
+      keywords.set(cs12,{size:'sm',bad:false,count:1});
+    }
+    // 转为数组并排序
+    const kwArr=[...keywords.entries()].map(([word,info])=>({word,...info}));
+    // 按权重排序：count高在前，size大的在前
+    const sizeOrder={xl:4,lg:3,md:2,sm:1};
+    kwArr.sort((a,b)=>(b.count-a.count)||(sizeOrder[b.size]-sizeOrder[a.size]));
+    if(kwArr.length===0){card.style.display='none';return}
+    let html='<div class="keyword-cloud">';
+    kwArr.forEach(kw=>{
+      const sizeClass='kw-'+kw.size;
+      const badClass=kw.bad?' kw-bad':'';
+      html+='<span class="keyword-tag '+sizeClass+badClass+'">'+escapeHtml(kw.word)+'</span>';
+    });
+    html+='</div>';
+    content.innerHTML=html;
+    card.style.display='';
+  }catch(e){
+    card.style.display='none';
+    console.error('关键词词云渲染错误:',e);
+  }
+}
+
 // ===== AI INTERPRETATION =====
 // 简单 markdown 渲染：**加粗** → <strong>，换行保留（CSS pre-wrap）
 function renderMarkdown(text) {
@@ -1081,6 +2182,586 @@ function showToast(msg){
   el.classList.add('show');
   if(_toastTimer){clearTimeout(_toastTimer);_toastTimer=null}
   _toastTimer=setTimeout(()=>{el.classList.remove('show');_toastTimer=null},2200);
+}
+
+// ===== 六爻起卦 (V3.2 新增) =====
+// --- 核心数据表 ---
+const LY_BAGUA={'乾':[1,1,1],'坤':[0,0,0],'震':[1,0,0],'巽':[0,1,1],'坎':[0,1,0],'离':[1,0,1],'艮':[0,0,1],'兑':[1,1,0]};
+const LY_BAGUA_NAME={0:'坤',1:'震',2:'坎',3:'兑',4:'艮',5:'离',6:'巽',7:'乾'};
+// 三爻八卦转数字：000=0(坤) 001=1(震) ... 111=7(乾)，bit低位在下
+function linesToTrigram(lines){return lines[0]*1+lines[1]*2+lines[2]*4}
+
+const LY_GUA64={
+  '乾天':{'up':'乾','down':'乾','gong':'乾','shi':5,'name':'乾为天'},
+  '天风姤':{'up':'乾','down':'巽','gong':'乾','shi':0,'name':'天风姤'},
+  '天山遁':{'up':'乾','down':'艮','gong':'乾','shi':1,'name':'天山遁'},
+  '天地否':{'up':'乾','down':'坤','gong':'乾','shi':2,'name':'天地否'},
+  '风地观':{'up':'巽','down':'坤','gong':'乾','shi':3,'name':'风地观'},
+  '山地剥':{'up':'艮','down':'坤','gong':'乾','shi':4,'name':'山地剥'},
+  '火地晋':{'up':'离','down':'坤','gong':'乾','shi':3,'name':'火地晋','youhun':1},
+  '火天大有':{'up':'离','down':'乾','gong':'乾','shi':2,'name':'火天大有','guihun':1},
+  '坎水':{'up':'坎','down':'坎','gong':'坎','shi':5,'name':'坎为水'},
+  '水泽节':{'up':'坎','down':'兑','gong':'坎','shi':0,'name':'水泽节'},
+  '水雷屯':{'up':'坎','down':'震','gong':'坎','shi':1,'name':'水雷屯'},
+  '水火既济':{'up':'坎','down':'离','gong':'坎','shi':2,'name':'水火既济'},
+  '泽火革':{'up':'兑','down':'离','gong':'坎','shi':3,'name':'泽火革'},
+  '雷火丰':{'up':'震','down':'离','gong':'坎','shi':4,'name':'雷火丰'},
+  '地火明夷':{'up':'坤','down':'离','gong':'坎','shi':3,'name':'地火明夷','youhun':1},
+  '地水师':{'up':'坤','down':'坎','gong':'坎','shi':2,'name':'地水师','guihun':1},
+  '艮山':{'up':'艮','down':'艮','gong':'艮','shi':5,'name':'艮为山'},
+  '山火贲':{'up':'艮','down':'离','gong':'艮','shi':0,'name':'山火贲'},
+  '山天大畜':{'up':'艮','down':'乾','gong':'艮','shi':1,'name':'山天大畜'},
+  '山泽损':{'up':'艮','down':'兑','gong':'艮','shi':2,'name':'山泽损'},
+  '火泽睽':{'up':'离','down':'兑','gong':'艮','shi':3,'name':'火泽睽'},
+  '天泽履':{'up':'乾','down':'兑','gong':'艮','shi':4,'name':'天泽履'},
+  '风泽中孚':{'up':'巽','down':'兑','gong':'艮','shi':3,'name':'风泽中孚','youhun':1},
+  '风山渐':{'up':'巽','down':'艮','gong':'艮','shi':2,'name':'风山渐','guihun':1},
+  '震雷':{'up':'震','down':'震','gong':'震','shi':5,'name':'震为雷'},
+  '雷地豫':{'up':'震','down':'坤','gong':'震','shi':0,'name':'雷地豫'},
+  '雷水解':{'up':'震','down':'坎','gong':'震','shi':1,'name':'雷水解'},
+  '雷风恒':{'up':'震','down':'巽','gong':'震','shi':2,'name':'雷风恒'},
+  '地风升':{'up':'坤','down':'巽','gong':'震','shi':3,'name':'地风升'},
+  '水风井':{'up':'坎','down':'巽','gong':'震','shi':4,'name':'水风井'},
+  '泽风大过':{'up':'兑','down':'巽','gong':'震','shi':3,'name':'泽风大过','youhun':1},
+  '泽雷随':{'up':'兑','down':'震','gong':'震','shi':2,'name':'泽雷随','guihun':1},
+  '巽风':{'up':'巽','down':'巽','gong':'巽','shi':5,'name':'巽为风'},
+  '风天小畜':{'up':'巽','down':'乾','gong':'巽','shi':0,'name':'风天小畜'},
+  '风火家人':{'up':'巽','down':'离','gong':'巽','shi':1,'name':'风火家人'},
+  '风雷益':{'up':'巽','down':'震','gong':'巽','shi':2,'name':'风雷益'},
+  '天雷无妄':{'up':'乾','down':'震','gong':'巽','shi':3,'name':'天雷无妄'},
+  '火雷噬嗑':{'up':'离','down':'震','gong':'巽','shi':4,'name':'火雷噬嗑'},
+  '山雷颐':{'up':'艮','down':'震','gong':'巽','shi':3,'name':'山雷颐','youhun':1},
+  '山风蛊':{'up':'艮','down':'巽','gong':'巽','shi':2,'name':'山风蛊','guihun':1},
+  '离火':{'up':'离','down':'离','gong':'离','shi':5,'name':'离为火'},
+  '火山旅':{'up':'离','down':'艮','gong':'离','shi':0,'name':'火山旅'},
+  '火风鼎':{'up':'离','down':'巽','gong':'离','shi':1,'name':'火风鼎'},
+  '火水未济':{'up':'离','down':'坎','gong':'离','shi':2,'name':'火水未济'},
+  '山水蒙':{'up':'艮','down':'坎','gong':'离','shi':3,'name':'山水蒙'},
+  '风水涣':{'up':'巽','down':'坎','gong':'离','shi':4,'name':'风水涣'},
+  '天水讼':{'up':'乾','down':'坎','gong':'离','shi':3,'name':'天水讼','youhun':1},
+  '天火同人':{'up':'乾','down':'离','gong':'离','shi':2,'name':'天火同人','guihun':1},
+  '坤地':{'up':'坤','down':'坤','gong':'坤','shi':5,'name':'坤为地'},
+  '地雷复':{'up':'坤','down':'震','gong':'坤','shi':0,'name':'地雷复'},
+  '地泽临':{'up':'坤','down':'兑','gong':'坤','shi':1,'name':'地泽临'},
+  '地天泰':{'up':'坤','down':'乾','gong':'坤','shi':2,'name':'地天泰'},
+  '雷天大壮':{'up':'震','down':'乾','gong':'坤','shi':3,'name':'雷天大壮'},
+  '泽天夬':{'up':'兑','down':'乾','gong':'坤','shi':4,'name':'泽天夬'},
+  '水天需':{'up':'坎','down':'乾','gong':'坤','shi':3,'name':'水天需','youhun':1},
+  '水地比':{'up':'坎','down':'坤','gong':'坤','shi':2,'name':'水地比','guihun':1},
+  '兑泽':{'up':'兑','down':'兑','gong':'兑','shi':5,'name':'兑为泽'},
+  '泽水困':{'up':'兑','down':'坎','gong':'兑','shi':0,'name':'泽水困'},
+  '泽地萃':{'up':'兑','down':'坤','gong':'兑','shi':1,'name':'泽地萃'},
+  '泽山咸':{'up':'兑','down':'艮','gong':'兑','shi':2,'name':'泽山咸'},
+  '水山蹇':{'up':'坎','down':'艮','gong':'兑','shi':3,'name':'水山蹇'},
+  '地山谦':{'up':'坤','down':'艮','gong':'兑','shi':4,'name':'地山谦'},
+  '雷山小过':{'up':'震','down':'艮','gong':'兑','shi':3,'name':'雷山小过','youhun':1},
+  '雷泽归妹':{'up':'震','down':'兑','gong':'兑','shi':2,'name':'雷泽归妹','guihun':1},
+};
+
+const LY_NAJIA={
+  '乾':['甲子','甲寅','甲辰','壬午','壬申','壬戌'],
+  '坤':['乙未','乙巳','乙卯','癸丑','癸亥','癸酉'],
+  '震':['庚子','庚寅','庚辰','庚午','庚申','庚戌'],
+  '巽':['辛丑','辛亥','辛酉','辛未','辛巳','辛卯'],
+  '坎':['戊寅','戊辰','戊子','戊申','戊戌','戊午'],
+  '离':['己卯','己丑','己亥','己酉','己未','己巳'],
+  '艮':['丙辰','丙午','丙申','丙戌','丙子','丙寅'],
+  '兑':['丁巳','丁卯','丁丑','丁亥','丁酉','丁未'],
+};
+
+const LY_WX_GAN={'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
+const LY_WX_ZHI={'子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'};
+const LY_GONG_WX={'乾':'金','坎':'水','艮':'土','震':'木','巽':'木','离':'火','坤':'土','兑':'金'};
+const LY_SHENG={'木':'火','火':'土','土':'金','金':'水','水':'木'};
+const LY_KE={'木':'土','土':'水','水':'火','火':'金','金':'木'};
+const LY_LIUSHEN=['青龙','朱雀','勾陈','腾蛇','白虎','玄武'];
+const LY_LIUSHEN_START={'甲':0,'乙':0,'丙':1,'丁':1,'戊':2,'己':3,'庚':4,'辛':4,'壬':5,'癸':5};
+// 用神映射
+const LY_YONGSHEN={
+  general:null,wealth:'妻财',career:'官鬼',love:'妻财',
+  health:'官鬼',travel:'子孙',exam:'父母',lost:'妻财',lawsuit:'官鬼'
+};
+const LY_TOPIC_NAME={general:'通用',wealth:'求财',career:'事业',love:'感情',health:'健康',travel:'出行',exam:'考试',lost:'失物',lawsuit:'官非'};
+// 卦辞/爻辞（精选常用卦的简注，其余用通用模板）
+const LY_GUA_JUDGES={
+  '乾为天':'元亨利贞，刚健中正。大吉之卦，主大有所成。',
+  '坤为地':'厚德载物，柔顺利贞。主顺从包容，终得吉祥。',
+  '坎为水':'重险陷溺，需诚信维系。主险中求稳，不宜冒进。',
+  '离为火':'光明美丽，利贞亨通。主声名显达，但需防过盛。',
+  '震为雷':'震惊百里，动而有序。主变动将至，需临危不乱。',
+  '巽为风':'柔顺渗透，利有攸往。主渐进谋事，不宜强求。',
+  '艮为山':'静止适时，思不出位。主宜守不宜动，静待时机。',
+  '兑为泽':'喜悦和顺，利贞。主吉庆之事，但需防口舌。',
+  '水雷屯':'始难后通，利建侯。主初期艰难，需坚持待机。',
+  '水火既济':'既济定也，初吉终乱。主已成之事需谨慎维持。',
+  '火水未济':'未济求成，狐涉水濡。主事未成，需继续努力。',
+  '地天泰':'天地交泰，大吉。主上下通达，万事亨通。',
+  '天地否':'天地不交，闭塞不通。主事不顺，需隐忍待变。',
+  '泽山咸':'感应交泰，亨通利贞。主感情和合，心意相通。',
+  '雷风恒':'恒久不易，利贞。主持久坚持，终有所成。',
+  '天山遁':'退避隐遁，亨通小利。主宜退不宜进，避其锋芒。',
+  '雷天大壮':'大壮刚盛，利贞。主势盛力强，但需守正不冒进。',
+  '火天大有':'大有所有，元亨。主大有所获，吉庆丰盈。',
+};
+
+function lyGetLiuqin(dayGanWx,zhiWx){
+  if(dayGanWx===zhiWx)return '兄弟';
+  if(LY_SHENG[dayGanWx]===zhiWx)return '子孙';
+  if(LY_KE[dayGanWx]===zhiWx)return '妻财';
+  if(LY_KE[zhiWx]===dayGanWx)return '官鬼';
+  if(LY_SHENG[zhiWx]===dayGanWx)return '父母';
+  return '?';
+}
+
+// ===== V3.3 专业层数据表 =====
+const LY_GAN_ARR=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const LY_ZHI_ARR=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+// 旬空表
+const LY_XUNKONG={'甲子':['戌','亥'],'甲戌':['申','酉'],'甲申':['午','未'],'甲午':['辰','巳'],'甲辰':['寅','卯'],'甲寅':['子','丑']};
+// 旬首表（60甲子→旬首）
+const LY_XUNSHOU={};
+for(let i=0;i<60;i++){
+  const gz=LY_GAN_ARR[i%10]+LY_ZHI_ARR[i%12];
+  const xunIdx=Math.floor(i/10);
+  LY_XUNSHOU[gz]=['甲子','甲戌','甲申','甲午','甲辰','甲寅'][xunIdx];
+}
+// 六冲表
+const LY_CHONG={'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'};
+// 六合表
+const LY_LIUHE={'子':'丑','丑':'子','寅':'亥','亥':'寅','卯':'戌','戌':'卯','辰':'酉','酉':'辰','巳':'申','申':'巳','午':'未','未':'午'};
+// 月建：农历月→地支
+const LY_MONTH_ZHI=['寅','卯','辰','巳','午','未','申','酉','戌','亥','子','丑'];
+
+function lyGetXunkong(dayGz){
+  const xs=LY_XUNSHOU[dayGz];
+  return LY_XUNKONG[xs]||[];
+}
+function lyGetYueJian(lunar){
+  const m=Math.abs(lunar.getMonth());
+  return LY_MONTH_ZHI[m-1];
+}
+function lyGetJinTui(fromZhi,toZhi){
+  const i1=LY_ZHI_ARR.indexOf(fromZhi),i2=LY_ZHI_ARR.indexOf(toZhi);
+  const diff=(i2-i1+12)%12;
+  if(diff===1)return'进神';
+  if(diff===11)return'退神';
+  return null;
+}
+
+// 通过6爻查找卦名
+function lyFindGua(lines){
+  const downLines=lines.slice(0,3);
+  const upLines=lines.slice(3,6);
+  const downNum=linesToTrigram(downLines);
+  const upNum=linesToTrigram(upLines);
+  const downName=LY_BAGUA_NAME[downNum];
+  const upName=LY_BAGUA_NAME[upNum];
+  // 拼接卦名查找
+  for(const [key,gua] of Object.entries(LY_GUA64)){
+    if(gua.up===upName&&gua.down===downName)return{key,...gua};
+  }
+  return null;
+}
+
+// 排盘：纳甲+六亲+六神+世应+用神
+function lyPaipan(lines,movingLines,dayGan,topic){
+  const guaInfo=lyFindGua(lines);
+  if(!guaInfo)return null;
+  // 变卦
+  let bianguaInfo=null;
+  let bianNajia=[];
+  if(movingLines.length>0){
+    const changedLines=lines.map((l,i)=>movingLines.includes(i)?(l===1?0:1):l);
+    bianguaInfo=lyFindGua(changedLines);
+    if(bianguaInfo){
+      const bdNajia=LY_NAJIA[bianguaInfo.down].slice(0,3);
+      const buNajia=LY_NAJIA[bianguaInfo.up].slice(3,6);
+      bianNajia=[...bdNajia,...buNajia];
+    }
+  }
+  // 纳甲
+  const downNajia=LY_NAJIA[guaInfo.down].slice(0,3);
+  const upNajia=LY_NAJIA[guaInfo.up].slice(3,6);
+  const najia=[...downNajia,...upNajia];
+  // 六亲
+  const dayGanWx=LY_WX_GAN[dayGan];
+  const liuqins=najia.map(nz=>{
+    const zhi=nz[1];
+    return lyGetLiuqin(dayGanWx,LY_WX_ZHI[zhi]);
+  });
+  // 六神
+  const shenStart=LY_LIUSHEN_START[dayGan];
+  const liushens=[];
+  for(let i=0;i<6;i++)liushens.push(LY_LIUSHEN[(shenStart+i)%6]);
+  // 世应
+  const shiIdx=guaInfo.shi;
+  const yingIdx=(shiIdx+3)%6;
+  // 用神
+  const yongshenType=LY_YONGSHEN[topic];
+  let yongshenIdx=-1;
+  if(yongshenType){
+    for(let i=0;i<6;i++){if(liuqins[i]===yongshenType){yongshenIdx=i;break}}
+  }
+  // 原神（生用神者）
+  let yuanIdx=-1;
+  if(yongshenIdx>=0){
+    const yongWx=LY_WX_ZHI[najia[yongshenIdx][1]];
+    const yuanWx=Object.keys(LY_SHENG).find(k=>LY_SHENG[k]===yongWx);
+    if(yuanWx){
+      for(let i=0;i<6;i++){if(LY_WX_ZHI[najia[i][1]]===yuanWx){yuanIdx=i;break}}
+    }
+  }
+  // ===== V3.3 专业层计算 =====
+  // 获取日辰地支、月建、旬空
+  let dayZhi='',dayGz='',yueJian='',xunkong=[];
+  try{
+    if(typeof Solar!=='undefined'){
+      const solar=Solar.fromDate(new Date());
+      const lunar=solar.getLunar();
+      dayGz=lunar.getDayInGanZhi();
+      dayZhi=dayGz[1];
+      yueJian=lyGetYueJian(lunar);
+      xunkong=lyGetXunkong(dayGz);
+    }
+  }catch(e){}
+  const yuePo=LY_CHONG[yueJian]||'';
+  // 每爻的专业层状态
+  const yaoStates=najia.map((nz,i)=>{
+    const zhi=nz[1];
+    const wx=LY_WX_ZHI[zhi];
+    const isMoving=movingLines.includes(i);
+    const isXunkong=xunkong.includes(zhi);
+    const isYuepo=zhi===yuePo;
+    const isRiChong=dayZhi&&LY_CHONG[dayZhi]===zhi;
+    const isRiHe=dayZhi&&LY_LIUHE[dayZhi]===zhi;
+    // 暗动：静爻被日辰冲
+    const isAnDong=!isMoving&&isRiChong;
+    // 进神退神：动爻化出的地支
+    let jinTui=null;
+    if(isMoving&&bianNajia[i]){
+      jinTui=lyGetJinTui(zhi,bianNajia[i][1]);
+    }
+    // 月建生克
+    const yueJianWx=LY_WX_ZHI[yueJian];
+    const shengByYue=LY_SHENG[yueJianWx]===wx;
+    const keByYue=LY_KE[yueJianWx]===wx;
+    const sameAsYue=yueJianWx===wx;
+    // 日辰生克
+    const dayZhiWx=dayZhi?LY_WX_ZHI[dayZhi]:null;
+    const shengByDay=dayZhiWx&&LY_SHENG[dayZhiWx]===wx;
+    const keByDay=dayZhiWx&&LY_KE[dayZhiWx]===wx;
+    const sameAsDay=dayZhiWx&&dayZhiWx===wx;
+    return{zhi,wx,isMoving,isXunkong,isYuepo,isRiChong,isRiHe,isAnDong,jinTui,
+      shengByYue,keByYue,sameAsYue,shengByDay,keByDay,sameAsDay};
+  });
+  return{
+    guaInfo,najia,liuqins,liushens,shiIdx,yingIdx,yongshenIdx,yuanIdx,
+    movingLines,bianguaInfo,dayGan,dayGanWx,topic,lines,
+    // V3.3 新增
+    dayGz,dayZhi,yueJian,yuePo,xunkong,bianNajia,yaoStates
+  };
+}
+
+// ===== V3.3 六层评分断卦 =====
+function lyJudge(paipan){
+  if(!paipan)return{level:'未知',text:'排盘数据异常'};
+  const{yongshenIdx,yuanIdx,movingLines,najia,shiIdx,yingIdx,yaoStates,dayGz,dayZhi,yueJian,yuePo,xunkong,topic}=paipan;
+  const yongshenType=LY_YONGSHEN[topic];
+  if(!yongshenType||yongshenIdx<0){
+    // 通用判断
+    const shiMoving=movingLines.includes(shiIdx);
+    const yingMoving=movingLines.includes(yingIdx);
+    if(movingLines.length===0){
+      // 检查暗动
+      const anDongCount=yaoStates.filter(s=>s.isAnDong).length;
+      if(anDongCount>0)return{level:'中',text:'六爻虽静，但有'+anDongCount+'爻暗动（被日辰冲），事有暗流涌动，宜察变数。'};
+      return{level:'平',text:'六爻安静无动，事态平稳但缺少变化。需待时而动，不宜急躁。'};
+    }
+    if(shiMoving){
+      return{level:'中吉',text:'世爻发动，主动求变，事在人为。'+(yingMoving?'应爻同动，双方呼应，事可成。':'应爻安静，对方未动，需主动争取。')};
+    }
+    return{level:'中',text:'动爻'+movingLines.map(i=>LY_YAO_NAME[i]).join('、')+'发动，事有变化。'};
+  }
+  // 有用神的六层评分
+  const yongState=yaoStates[yongshenIdx];
+  const yuanState=yuanIdx>=0?yaoStates[yuanIdx]:null;
+  const yongWx=yongState.wx;
+  let score=0;
+  let reasons=[];
+  // 第一层：月建 ±3
+  if(yongState.sameAsYue){score+=3;reasons.push('用神临月建，旺极')}
+  else if(yongState.shengByYue){score+=2;reasons.push('月建生用神，得令')}
+  else if(yongState.keByYue){score-=3;reasons.push('月建克用神，失令')}
+  // 月破
+  if(yongState.isYuepo){score-=3;reasons.push('用神月破，力量大减')}
+  // 第二层：日辰 ±2
+  if(yongState.sameAsDay){score+=2;reasons.push('用神临日辰')}
+  else if(yongState.shengByDay){score+=2;reasons.push('日辰生用神')}
+  else if(yongState.keByDay){score-=2;reasons.push('日辰克用神')}
+  // 日冲（非月破）
+  if(yongState.isRiChong&&!yongState.isYuepo){score-=1;reasons.push('日辰冲用神')}
+  // 日合
+  if(yongState.isRiHe){score+=1;reasons.push('日辰合用神，得助')}
+  // 第三层：旬空 −2~−3
+  if(yongState.isXunkong){
+    if(yongState.isMoving){score-=2;reasons.push('用神空亡发动，虚而不实')}
+    else{score-=3;reasons.push('用神空亡，力量大减')}
+  }
+  // 第四层：暗动 +1（静爻被日冲为暗动）
+  if(yongState.isAnDong){score+=1;reasons.push('用神暗动，暗中发力')}
+  // 用神发动 +2
+  if(yongState.isMoving){score+=2;reasons.push('用神明动，主动有力')}
+  // 第五层：进神退神 ±1
+  if(yongState.jinTui==='进神'){score+=1;reasons.push('化进神，力量增强')}
+  if(yongState.jinTui==='退神'){score-=1;reasons.push('化退神，力量衰减')}
+  // 原神发动 +1
+  if(yuanState&&yuanState.isMoving){score+=1;reasons.push('原神发动，生扶用神')}
+  if(yuanState&&yuanState.isXunkong){score-=1;reasons.push('原神空亡，生扶无力')}
+  // 动爻生克用神
+  movingLines.forEach(i=>{
+    if(i===yongshenIdx)return;
+    const ms=yaoStates[i];
+    if(LY_SHENG[ms.wx]===yongWx){score+=1;reasons.push(LY_YAO_NAME[i]+'生用神')}
+    if(LY_KE[ms.wx]===yongWx){score-=1;reasons.push(LY_YAO_NAME[i]+'克用神')}
+  });
+  let level,text;
+  if(score>=4){level='大吉';text='用神旺相，'+reasons.join('，')+'。所问之事可成，宜积极行动。'}
+  else if(score>=2){level='吉';text='用神得力，'+reasons.join('，')+'。事有可成之象，顺势而为。'}
+  else if(score>=0){level='中吉';text='用神尚可，'+reasons.join('，')+'。事有波折但终归平稳。'}
+  else if(score>=-2){level='中';text='用神受制，'+reasons.join('，')+'。事有阻力，需谨慎应对。'}
+  else{level='凶';text='用神衰弱，'+reasons.join('，')+'。事难成就，宜暂缓不宜强求。'}
+  return{level,text,score,reasons};
+}
+
+const LY_YAO_NAME=['初爻','二爻','三爻','四爻','五爻','上爻'];
+const LY_YAO_NUM=['初','二','三','四','五','上'];
+
+// --- 起卦方式 ---
+let lyMethod='coin';
+let lyTossCount=0;
+let lyTossResults=[]; // 每次抛的结果
+
+document.querySelectorAll('.ly-method-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.ly-method-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    lyMethod=btn.dataset.method;
+    document.getElementById('lyCoinArea').style.display=lyMethod==='coin'?'flex':'none';
+    document.getElementById('lyNumberArea').style.display=lyMethod==='number'?'block':'none';
+    if(lyMethod!=='coin')document.getElementById('lyTossProgress').style.display='none';
+  });
+});
+
+document.getElementById('lyCastBtn').addEventListener('click',lyCast);
+
+function lyCast(){
+  const question=document.getElementById('lyQuestion').value.trim();
+  const topic=document.getElementById('lyTopic').value;
+  let lines=[],movingLines=[];
+  if(lyMethod==='coin'){
+    lyCastCoin(question,topic);
+  }else if(lyMethod==='number'){
+    const n1=parseInt(document.getElementById('lyNum1').value);
+    const n2=parseInt(document.getElementById('lyNum2').value);
+    const n3=parseInt(document.getElementById('lyNum3').value);
+    if(!n1||!n2||!n3||n1<1||n1>9||n2<1||n2>9||n3<1||n3>9){
+      showToast('请输入三个1-9的数字');return;
+    }
+    // 数字法：三个数字分别取余8得上卦、中卦、下卦
+    // 简化：数字之和%8=上卦，(数字之和+时辰)%6取动爻
+    // 标准梅花数字法：上卦=(n1+n2+n3)%8，下卦=(n1+n2+n3)%8... 
+    // 这里用简化版：第一个数%8为上卦，(n1+n2)%8为下卦，(n1+n2+n3)%6为动爻
+    let upNum=(n1)%8||8;
+    let downNum=(n2)%8||8;
+    let movingYao=((n1+n2+n3)%6); // 0-5
+    const upName=LY_BAGUA_NAME[upNum-1]||'坤';
+    const downName=LY_BAGUA_NAME[downNum-1]||'坤';
+    lines=[...LY_BAGUA[downName],...LY_BAGUA[upName]];
+    movingLines=[movingYao];
+    lyRenderResult(lines,movingLines,question,topic);
+  }else if(lyMethod==='time'){
+    // 时间起卦：年月日取上卦，年月日时取下卦，总数取动爻
+    const now=new Date();
+    const y=now.getFullYear();
+    const m=now.getMonth()+1;
+    const d=now.getDate();
+    const h=now.getHours();
+    const shichen=Math.floor((h+1)/2)%12; // 0-11子时到亥时
+    const upNum=(y+m+d)%8||8;
+    const downNum=(y+m+d+shichen)%8||8;
+    const movingYao=(y+m+d+shichen)%6;
+    const upName=LY_BAGUA_NAME[upNum-1]||'坤';
+    const downName=LY_BAGUA_NAME[downNum-1]||'坤';
+    lines=[...LY_BAGUA[downName],...LY_BAGUA[upName]];
+    movingLines=[movingYao];
+    lyRenderResult(lines,movingLines,question,topic);
+  }
+}
+
+// 铜钱法：6次抛掷动画
+function lyCastCoin(question,topic){
+  if(lyTossCount>=6){
+    // 重新开始
+    lyTossCount=0;lyTossResults=[];
+    document.getElementById('lyCastBtn').textContent='起卦';
+    document.getElementById('lyTossProgress').style.display='none';
+    document.getElementById('lyResultArea').innerHTML='<div class="ly-empty">心诚则灵 · 默念所问之事，选择起卦方式后点击「起卦」</div>';
+    return;
+  }
+  const coinArea=document.getElementById('lyCoinArea');
+  const progress=document.getElementById('lyTossProgress');
+  coinArea.style.display='flex';
+  progress.style.display='flex';
+  // 初始化进度点
+  if(lyTossCount===0){
+    progress.innerHTML='';
+    for(let i=0;i<6;i++){const dot=document.createElement('div');dot.className='ly-toss-dot';progress.appendChild(dot)}
+  }
+  const btn=document.getElementById('lyCastBtn');
+  btn.disabled=true;
+  btn.textContent='抛掷中…';
+  const coins=[document.getElementById('lyCoin1'),document.getElementById('lyCoin2'),document.getElementById('lyCoin3')];
+  coins.forEach(c=>{c.classList.add('flip');c.classList.remove('yang','yin')});
+  setTimeout(()=>{
+    // 生成结果
+    const toss=coins.map(()=>Math.random()<0.5?2:3); // 2=字(阴) 3=背(阳)
+    const sum=toss.reduce((a,b)=>a+b,0);
+    let line,moving;
+    if(sum===6){line=0;moving=true}
+    else if(sum===7){line=1;moving=false}
+    else if(sum===8){line=0;moving=false}
+    else{line=1;moving=true}
+    lyTossResults.push({line,moving,sum,toss});
+    // 显示铜钱
+    coins.forEach((c,i)=>{
+      c.classList.remove('flip');
+      if(toss[i]===3){c.classList.add('yang');c.textContent='背'}
+      else{c.classList.add('yin');c.textContent='字'}
+    });
+    // 进度
+    progress.children[lyTossCount].classList.add('done');
+    lyTossCount++;
+    btn.disabled=false;
+    if(lyTossCount<6){
+      btn.textContent='继续抛掷 ('+lyTossCount+'/6)';
+    }else{
+      btn.textContent='重新起卦';
+      const lines=lyTossResults.map(r=>r.line);
+      const movingLines=lyTossResults.map((r,i)=>r.moving?i:-1).filter(i=>i>=0);
+      setTimeout(()=>lyRenderResult(lines,movingLines,question,topic),600);
+    }
+  },600);
+}
+
+// 渲染结果
+function lyRenderResult(lines,movingLines,question,topic){
+  let dayGan='甲';
+  try{
+    if(typeof Solar!=='undefined'){
+      const solar=Solar.fromDate(new Date());
+      const lunar=solar.getLunar();
+      const dayGz=lunar.getDayInGanZhi();
+      dayGan=dayGz[0];
+    }
+  }catch(e){dayGan='甲'}
+  const paipan=lyPaipan(lines,movingLines,dayGan,topic);
+  if(!paipan){document.getElementById('lyResultArea').innerHTML='<div class="ly-empty">排盘失败，请重试</div>';return}
+  const result=lyJudge(paipan);
+  const{guaInfo,najia,liuqins,liushens,shiIdx,yingIdx,yongshenIdx,yuanIdx,bianguaInfo,yaoStates,dayGz,dayZhi,yueJian,yuePo,xunkong}=paipan;
+  const yongshenType=LY_YONGSHEN[topic];
+  // 渲染卦象
+  let html='<div class="ly-gua-display">';
+  // 本卦
+  html+='<div class="ly-gua-side"><div class="ly-gua-side-title">本卦</div><div class="ly-gua-name">'+escapeHtml(guaInfo.name)+'</div><div class="ly-yao-list">';
+  for(let i=5;i>=0;i--){
+    html+=lyRenderYao(i,lines[i],movingLines.includes(i),najia[i],liuqins[i],liushens[i],shiIdx,yingIdx,yongshenIdx,yuanIdx,yongshenType,false,yaoStates[i]);
+  }
+  html+='</div></div>';
+  // 变卦
+  if(bianguaInfo){
+    html+='<div class="ly-gua-side"><div class="ly-gua-side-title">变卦</div><div class="ly-gua-name">'+escapeHtml(bianguaInfo.name)+'</div><div class="ly-yao-list">';
+    const changedLines=lines.map((l,idx)=>movingLines.includes(idx)?(l===1?0:1):l);
+    const downNajia2=LY_NAJIA[bianguaInfo.down].slice(0,3);
+    const upNajia2=LY_NAJIA[bianguaInfo.up].slice(3,6);
+    const najia2=[...downNajia2,...upNajia2];
+    const dayGanWx=LY_WX_GAN[dayGan];
+    for(let i=5;i>=0;i--){
+      const lq2=lyGetLiuqin(dayGanWx,LY_WX_ZHI[najia2[i][1]]);
+      html+=lyRenderYao(i,changedLines[i],false,najia2[i],lq2,liushens[i],-1,-1,-1,-1,null,true);
+    }
+    html+='</div></div>';
+  }
+  html+='</div>';
+  // V3.3 日辰月建信息条
+  if(dayGz){
+    html+='<div style="padding:10px 16px;background:var(--ly-paper);border-radius:6px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;font-family:STKaiti,KaiTi,serif">'+
+      '<span style="color:var(--ly-ink3)">日辰：</span><span style="color:var(--ly-gold)">'+escapeHtml(dayGz)+'</span>'+
+      '<span style="color:var(--ly-ink3)">月建：</span><span style="color:var(--ly-gold)">'+escapeHtml(yueJian)+'</span>'+
+      '<span style="color:var(--ly-ink3)">月破：</span><span style="color:#d96a5c">'+escapeHtml(yuePo)+'</span>'+
+      '<span style="color:var(--ly-ink3)">旬空：</span><span style="color:var(--ly-ink2)">'+escapeHtml(xunkong.join('、'))+'</span>'+
+      '</div>';
+  }
+  // 结果解读
+  html+='<div class="ly-result">';
+  if(question)html+='<div class="ly-result-title">所问：'+escapeHtml(question)+'</div>';
+  else html+='<div class="ly-result-title">'+LY_TOPIC_NAME[topic]+'之事</div>';
+  const guaJudge=LY_GUA_JUDGES[guaInfo.name];
+  if(guaJudge)html+='<div style="margin:8px 0"><strong style="color:var(--ly-gold)">卦辞：</strong>'+escapeHtml(guaJudge)+'</div>';
+  // 用神
+  if(yongshenType&&yongshenIdx>=0){
+    html+='<div style="margin:8px 0"><strong style="color:var(--ly-gold)">用神：</strong>'+yongshenType+'（'+LY_YAO_NAME[yongshenIdx]+'·'+escapeHtml(najia[yongshenIdx])+'）';
+    if(yuanIdx>=0)html+=' · <strong style="color:var(--ly-jade)">原神：</strong>'+LY_YAO_NAME[yuanIdx]+'·'+escapeHtml(najia[yuanIdx]);
+    html+='</div>';
+  }
+  // 判断
+  html+='<div class="ly-result-judge"><strong>断卦：</strong>'+escapeHtml(result.text)+'</div>';
+  // 变卦提示
+  if(bianguaInfo){
+    html+='<div class="ly-result-detail">变卦为「'+escapeHtml(bianguaInfo.name)+'」，代表事态发展的走向。'+(LY_GUA_JUDGES[bianguaInfo.name]?escapeHtml(LY_GUA_JUDGES[bianguaInfo.name]):'')+'</div>';
+  }
+  // 印章
+  const sealText=result.level;
+  html+='<div style="text-align:center;margin-top:14px"><span class="ly-seal">'+escapeHtml(sealText)+'</span></div>';
+  // 免责
+  html+='<div style="font-size:10px;color:var(--ly-ink3);text-align:center;margin-top:12px;padding-top:10px;border-top:0.5px dashed rgba(212,200,168,0.1)">⚠️ 六爻排盘仅供娱乐参考，不构成任何决策建议。命理是参考，不是定数。</div>';
+  html+='</div>';
+  document.getElementById('lyResultArea').innerHTML=html;
+}
+
+function lyRenderYao(idx,line,moving,najia,liuqin,liushen,shiIdx,yingIdx,yongshenIdx,yuanIdx,yongshenType,isBian,yaoState){
+  const isYang=line===1;
+  let lineHTML;
+  if(isYang){
+    lineHTML='<div class="ly-yao-line yang"><div class="ly-bar"></div></div>';
+  }else{
+    lineHTML='<div class="ly-yao-line yin"><div class="ly-bar"></div><div class="ly-gap"></div><div class="ly-bar"></div></div>';
+  }
+  const movingMark=moving?'<span class="ly-mark">'+(isYang?'○':'×')+'</span>':'';
+  let tagsHTML='';
+  if(najia)tagsHTML+='<span class="ly-tag ganZhi">'+escapeHtml(najia)+'</span>';
+  if(liuqin)tagsHTML+='<span class="ly-tag liuqin">'+escapeHtml(liuqin)+'</span>';
+  if(liushen)tagsHTML+='<span class="ly-tag liushen">'+escapeHtml(liushen)+'</span>';
+  if(!isBian){
+    if(idx===shiIdx)tagsHTML+='<span class="ly-tag shishen">世</span>';
+    if(idx===yingIdx)tagsHTML+='<span class="ly-tag shishen ying">应</span>';
+    if(idx===yongshenIdx&&yongshenType)tagsHTML+='<span class="ly-tag yongshen">用</span>';
+    if(idx===yuanIdx)tagsHTML+='<span class="ly-tag yuan">原</span>';
+  }
+  // V3.3 专业层标签
+  if(yaoState&&!isBian){
+    if(yaoState.isXunkong)tagsHTML+='<span class="ly-tag pro-kong">空</span>';
+    if(yaoState.isYuepo)tagsHTML+='<span class="ly-tag pro-po">破</span>';
+    if(yaoState.isRiChong&&!yaoState.isYuepo)tagsHTML+='<span class="ly-tag pro-chong">日冲</span>';
+    if(yaoState.isRiHe)tagsHTML+='<span class="ly-tag pro-he">日合</span>';
+    if(yaoState.isAnDong)tagsHTML+='<span class="ly-tag pro-an">暗动</span>';
+    if(yaoState.jinTui==='进神')tagsHTML+='<span class="ly-tag pro-jin">进神</span>';
+    if(yaoState.jinTui==='退神')tagsHTML+='<span class="ly-tag pro-tui">退神</span>';
+  }
+  return '<div class="ly-yao'+(moving?' moving':'')+'">'+
+    '<span class="ly-yao-num">'+LY_YAO_NUM[idx]+'</span>'+
+    lineHTML+movingMark+
+    '<div class="ly-yao-info">'+tagsHTML+'</div>'+
+  '</div>';
 }
 
 // ---- Boot ----
